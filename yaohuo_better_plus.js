@@ -1163,7 +1163,7 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>开源地址</span>
             <span>
-              <a href="https://greasyfork.org/zh-CN/scripts/504289-妖火网增强脚本plus" target="_blank">Github</a>
+              <a href="https://github.com/v2jun/yaohuo_better_plus" target="_blank">Github</a>
             </span>
           </li>
 
