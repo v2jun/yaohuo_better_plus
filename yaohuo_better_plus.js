@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         0.9.2
+// @version         1.0.0
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -879,7 +879,9 @@ async function chuiniuHistory() {
   if (elementsWithText.length > 0) return;
 
   // 创建胜率结果显示容器，写入提示信息
-  $(`<p id="chuiniuWinningEle" style="background:#f0f9eb;color:gray;text-align:center;margin:0 auto;padding:0 20px;">历史记录获取中...</p>`).insertBefore($(".subtitle"));
+  $(
+    `<p id="chuiniuWinningEle" style="background:#f0f9eb;color:gray;text-align:center;margin:0 auto;padding:0 20px;">历史记录获取中...</p>`
+  ).insertBefore($(".subtitle"));
 
   const userinfoEle = $('a[href*="userinfo.aspx"]');
   const chuiniuQueUserId = getUrlParam("touserid", userinfoEle.attr("href")); // 发布者ID
@@ -1023,7 +1025,8 @@ function addTopAndDown() {
       img_dn +
       ") no-repeat scroll 50% 50% rgba(0, 0, 0, 0.7); border-radius:5px 0 0 5px; margin-top:-24px; }";
 
-    s += ".play_btn { -webkit-transition-duration:0.5s linear; -o-transition-duration:0.5s linear; -moz-transition-duration:0.5s linear; transition-duration:0.5s linear; opacity:0.65; }";
+    s +=
+      ".play_btn { -webkit-transition-duration:0.5s linear; -o-transition-duration:0.5s linear; -moz-transition-duration:0.5s linear; transition-duration:0.5s linear; opacity:0.65; }";
     s += ".play_btn:hover { opacity:1; }";
 
     addStyle("" + s);
@@ -1179,7 +1182,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>一键回到顶部/底部</span>
             <div class="switch">
-              <input name="showTopAndDownBtn" value="true" ${getUserSetting("showTopAndDownBtn") ? "checked" : ""}  class="switch-checkbox" id="showTopAndDownBtn" type="checkbox">
+              <input name="showTopAndDownBtn" value="true" ${
+                getUserSetting("showTopAndDownBtn") ? "checked" : ""
+              }  class="switch-checkbox" id="showTopAndDownBtn" type="checkbox">
               <label class="switch-label" for="showTopAndDownBtn">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1189,7 +1194,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>隐藏楼主勋章</span>
             <div class="switch">
-              <input name="hideXunzhang" value="true" ${getUserSetting("hideXunzhang") ? "checked" : ""}  class="switch-checkbox" id="hideXunzhang" type="checkbox">
+              <input name="hideXunzhang" value="true" ${
+                getUserSetting("hideXunzhang") ? "checked" : ""
+              }  class="switch-checkbox" id="hideXunzhang" type="checkbox">
               <label class="switch-label" for="hideXunzhang">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1198,7 +1205,9 @@ function createScriptSetting() {
           </li>
           <!--<li class="setting-li-between">
             <span><a href="https://www.superbed.cn/" target="_blank">图床token</a></span>
-            <input style="width:150px;" class="setting-li-input" value="${getUserSetting("superbedToken")}" name="superbedToken" id="superbedToken"  type="password" placeholder="为空则为游客上传…"/>
+            <input style="width:150px;" class="setting-li-input" value="${getUserSetting(
+              "superbedToken"
+            )}" name="superbedToken" id="superbedToken"  type="password" placeholder="为空则为游客上传…"/>
           </li>
           <li class="setting-li-tips">用于发帖/回帖图片/视频自动上传</li>-->
           <li class="setting-li-between">
@@ -1209,7 +1218,9 @@ function createScriptSetting() {
           <!--<li class="setting-li-between">
             <span>回帖表情展开</span>
             <div class="switch">
-              <input name="showFaceList" value="true" ${getUserSetting("showFaceList") ? "checked" : ""}  class="switch-checkbox" id="showFaceList" type="checkbox">
+              <input name="showFaceList" value="true" ${
+                getUserSetting("showFaceList") ? "checked" : ""
+              }  class="switch-checkbox" id="showFaceList" type="checkbox">
               <label class="switch-label" for="showFaceList">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1219,7 +1230,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>展开发帖 UBB</span>
             <div class="switch">
-              <input name="showBookViewUbb" value="true" ${getUserSetting("showBookViewUbb") ? "checked" : ""}  class="switch-checkbox" id="showBookViewUbb" type="checkbox">
+              <input name="showBookViewUbb" value="true" ${
+                getUserSetting("showBookViewUbb") ? "checked" : ""
+              }  class="switch-checkbox" id="showBookViewUbb" type="checkbox">
               <label class="switch-label" for="showBookViewUbb">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1229,7 +1242,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>展开回帖 UBB</span>
             <div class="switch">
-              <input name="showHuifuUbb" value="true" ${getUserSetting("showHuifuUbb") ? "checked" : ""}  class="switch-checkbox" id="showHuifuUbb" type="checkbox">
+              <input name="showHuifuUbb" value="true" ${
+                getUserSetting("showHuifuUbb") ? "checked" : ""
+              }  class="switch-checkbox" id="showHuifuUbb" type="checkbox">
               <label class="switch-label" for="showHuifuUbb">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1243,7 +1258,9 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting" style="display: none;">
             <span>一键吃肉</span>
             <div class="switch">
-              <input name="oneClickCollectMoney" value="true" ${getUserSetting("oneClickCollectMoney") ? "checked" : ""}  class="switch-checkbox" id="oneClickCollectMoney" type="checkbox">
+              <input name="oneClickCollectMoney" value="true" ${
+                getUserSetting("oneClickCollectMoney") ? "checked" : ""
+              }  class="switch-checkbox" id="oneClickCollectMoney" type="checkbox">
               <label class="switch-label" for="oneClickCollectMoney">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1253,7 +1270,9 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting" style="display: none;">
             <span>吹牛历史查询</span>
             <div class="switch">
-              <input name="showChuiniuHistory" value="true" ${getUserSetting("showChuiniuHistory") ? "checked" : ""}  class="switch-checkbox" id="showChuiniuHistory" type="checkbox">
+              <input name="showChuiniuHistory" value="true" ${
+                getUserSetting("showChuiniuHistory") ? "checked" : ""
+              }  class="switch-checkbox" id="showChuiniuHistory" type="checkbox">
               <label class="switch-label" for="showChuiniuHistory">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1263,7 +1282,9 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting" style="display: none;">
             <span>复读机(回帖+1)</span>
             <div class="switch">
-              <input name="showHuifuCopy" value="true" ${getUserSetting("showHuifuCopy") ? "checked" : ""}  class="switch-checkbox" id="showHuifuCopy" type="checkbox">
+              <input name="showHuifuCopy" value="true" ${
+                getUserSetting("showHuifuCopy") ? "checked" : ""
+              }  class="switch-checkbox" id="showHuifuCopy" type="checkbox">
               <label class="switch-label" for="showHuifuCopy">
                 <span class="switch-inner" data-on="开" data-off="关"></span>
                 <span class="switch-switch"></span>
@@ -1300,6 +1321,10 @@ function createScriptSetting() {
     );
     $(".setting-div .clear-setting").click((e) => {
       localStorage.removeItem("yaohuoBetterPlusSetting");
+      // 刷新页面以应用新设置
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     });
     $(".setting-div .setting-cancel-btn").click(closePopupContainer);
     $(".setting-div .setting-confirm-btn").click(
