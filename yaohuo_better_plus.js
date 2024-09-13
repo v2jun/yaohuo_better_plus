@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.0.0
+// @version         0.9.4
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -213,19 +213,27 @@ const customCSS = `
   .ubb-list-div{
     display:flex;
     flex-wrap: wrap;
-    padding:0px 10px;
+    gap: 4px 1px;
+    justify-content: space-between;
+    margin: 0 1%;
+    padding:5px;
     font-size:12px;
+    border: 1px solid #d4d4d4;
+    border-radius: 8px;
   }
   .ubb-item{
     height:25px;
     line-height:25px;
-    margin:0 5px 5px 0;
+    /*margin:0 5px 5px 0;*/
     padding:0 10px;
     display:inline-block;
     border: 1px solid #1abc9c;
     color: #333;
     text-decoration: none;
     border-radius:30px;
+  }
+  .ubb-list-div > .ubb-item:last-child{
+  color:red;
   }
 
   .clear-setting{
@@ -689,11 +697,12 @@ function bookViewAddUbb() {
       $(span).click(async () => handleInsert(ubbItem));
       ubbListHtml.push(span);
     });
-    $(".content br").eq(1).after('<div class="ubb-list-div"></div>');
+    // $(".content br").eq(1).after('<div class="ubb-list-div"></div>');
+    $(".content .book_view_add_height").eq(1).after('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
     $(".ubb-list-div").append(ubbListHtml);
   }
   function createToggleEle() {
-    const toggleEle = $(`<span class="custom-toggle-btn">${getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"}</span>`);
+    const toggleEle = $(`<span class="custom-toggle-btn" style="font-size:10px;">${getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"}</span>`);
     toggleEle.click(function () {
       const showBookViewUbb = getUserSetting("showBookViewUbb");
       if (showBookViewUbb) {
@@ -706,7 +715,8 @@ function bookViewAddUbb() {
         $(this).text("折叠 UBB");
       }
     });
-    $(".content input[name='g']").after(toggleEle);
+    // $(".content input[name='g']").after(toggleEle);
+    $(".content #saveDraftButton").before(toggleEle);
   }
 }
 
@@ -1170,7 +1180,7 @@ function createScriptSetting() {
             </span>
           </li>
 
-          <li class="setting-li-title"><hr/><b>自定义设置</b><hr/></li>
+          <li class="setting-li-title"><hr/><b>设置</b><hr/></li>
           <li class="setting-li-between">
             <span>设置图标大小(px)</span>
             <input name="settingIconSize" class="setting-li-input" type="number" value="${getUserSetting("settingIconSize")}"/>
@@ -1303,30 +1313,36 @@ function createScriptSetting() {
     container.append(vSettingEle);
     // 禁止蒙版下的body内容滚动
     $("body").css("overflow", "hidden");
-
+    // 高级设置
     $(".setting-div .setting-title").click(
-      clickCounter(".setting-div .setting-title", function () {
-        const showMoreSetting = getUserSetting("showMoreSetting");
-        if (showMoreSetting) {
-          $(".setting-div .more-setting").hide();
-          saveUserSetting("showMoreSetting", false);
-          notifyBox("高级设置已隐藏");
-        } else {
-          $(".setting-div .more-setting").show();
-          saveUserSetting("showMoreSetting", true);
-
-          notifyBox("高级设置已开启");
-        }
-      })
+      clickCounter(
+        ".setting-div .setting-title",
+        function () {
+          const showMoreSetting = getUserSetting("showMoreSetting");
+          if (showMoreSetting) {
+            $(".setting-div .more-setting").hide();
+            saveUserSetting("showMoreSetting", false);
+            notifyBox("高级设置已隐藏");
+          } else {
+            $(".setting-div .more-setting").show();
+            saveUserSetting("showMoreSetting", true);
+            notifyBox("高级设置已开启");
+          }
+        },
+        10,
+        10
+      )
     );
+    // 清除缓存
     $(".setting-div .clear-setting").click((e) => {
       localStorage.removeItem("yaohuoBetterPlusSetting");
-      // 刷新页面以应用新设置
       setTimeout(() => {
         window.location.reload();
       }, 300);
     });
+    // 取消按钮
     $(".setting-div .setting-cancel-btn").click(closePopupContainer);
+    // 提交按钮
     $(".setting-div .setting-confirm-btn").click(
       debounce(() => {
         const formData = {};
@@ -1502,9 +1518,9 @@ function generateRandomString(length) {
  * @param {*} clickEle 指定元素
  * @param {*} callback 回调函数
  * @param {*} clickLimit 点击次数
- * @param {*} timeLimit 每次点击最大限制时间
+ * @param {*} timeLimit 连续点击限制时间，单位/s
  */
-function clickCounter(clickEle, callback, clickLimit = 3, timeLimit = 1000) {
+function clickCounter(clickEle, callback, clickLimit = 3, timeLimit = 1) {
   $(clickEle).on("click", function () {
     let $button = $(this);
     let clickCount = $button.data("clickCount") || 0; // 获取点击次数，如果不存在则默认为0
@@ -1517,7 +1533,7 @@ function clickCounter(clickEle, callback, clickLimit = 3, timeLimit = 1000) {
         "timeout",
         setTimeout(function () {
           $button.removeData("clickCount"); // 超时后移除点击次数数据
-        }, timeLimit)
+        }, timeLimit * 1000)
       ); // 设置时间窗口，单位为毫秒
     } else if (clickCount === clickLimit) {
       // 如果点击次数达到设定的限制
