@@ -28,12 +28,16 @@ const defaultSetting = {
   showTopAndDownBtn: true, // 显示一键回到顶部/底部
   hideXunzhang: true, // 隐藏勋章
   showBookViewUbb: false, // 发帖 ubb 展开
+  showBookViewFace: false, // 发帖表情展开
   showHuifuUbb: false, // 回帖 ubb 展开
-
   imgThumbWidth: 100, // 图片缩小后显示宽度
   showFaceList: true, // 回帖表情展开
-  superbedToken: "", // 聚合图床 token，为空时使用游客身份上传
-  // 站内图片增强
+
+  fileUploadToken: "", // 图床 token
+  suimoConfig: {
+    email: "",
+    password: "",
+  },
 
   showMoreSetting: false, // 高级设置
   oneClickCollectMoney: false, // 一键吃肉
@@ -525,8 +529,9 @@ const diyFaceList = [
 // ubb
 const bookViewUbbList = [
   { name: "超链接", ubb: "[url=网址]文字说明[/url]" },
-  { name: "图片", ubb: "[img]图片链接[/img]", isUpload: true, clickFunc: (e) => {} },
-  { name: "视频", ubb: "[movie]视频直链地址[/movie]", isUpload: true, clickFunc: (e) => {} },
+  { name: "图片", ubb: "[img]图片链接[/img]", needUpload: true, uploadID: "upload-img", accept: "image/*" },
+  { name: "视频", ubb: "[movie]视频直链地址[/movie]", needUpload: true, uploadID: "upload-video", accept: "video/*" },
+  { name: "音频", ubb: "[audio]音频直链地址[/audio]", needUpload: true, uploadID: "upload-video", accept: "audio/*" },
   { name: "文字颜色", ubb: "[forecolor=red]红色文字[/forecolor]" },
   { name: "代码", ubb: "[text]代码内容[/text]" },
   { name: "换行", ubb: "///" },
@@ -539,7 +544,6 @@ const bookViewUbbList = [
   { name: "发短信", ubb: "[url=sms:手机号码?body=短信内容]点此发送[/url]" },
   { name: "当前日期&时间", ubb: "[now]" },
   { name: "倒计时天数", ubb: "[codo]2030-01-01[/codo]" },
-  { name: "音频", ubb: "[audio]音频直链地址[/audio]" },
   // { name: "抖音解析", ubb: "", needInput: true },
   // { name: "快手解析", ubb: "", needInput: true },
   // { name: "B站解析", ubb: "", needInput: true },
@@ -626,9 +630,7 @@ function huifuAddUbb() {
   createToggleEle();
   createUbbListEle();
 
-  if (!getUserSetting("showHuifuUbb")) {
-    $(".ubb-list-div").hide();
-  }
+  !getUserSetting("showHuifuUbb") && $(".ubb-list-div").hide();
 
   function handleInsert(item) {
     const { ubb, isUpload, isInput } = item;
@@ -675,53 +677,161 @@ function huifuAddUbb() {
 function bookViewAddUbb() {
   createToggleEle();
   createUbbListEle();
+  createFaceListEle();
 
-  if (!getUserSetting("showBookViewUbb")) {
-    $(".ubb-list-div").hide();
-  }
+  // 读取设置，当折叠时隐藏
+  !getUserSetting("showBookViewUbb") && $(".ubb-list-div").hide();
+  !getUserSetting("showBookViewFace") && $(".facelist-div.bookview-face").hide();
 
-  function handleInsert(item) {
-    const { ubb, isUpload, isInput } = item;
-    if (isUpload) {
-      // 上传文件
-      insetCustomContent(ubb, ".content [name='book_content']", true);
-    } else if (isInput) {
-      // 输入内容
-      insetCustomContent(ubb, ".content [name='book_content']", true);
+  function createFaceListEle() {
+    if (window.location.pathname === "/bbs/book_view_mod.aspx") {
+      // 修改帖子
+      $(".content .centered-container").eq(1).before('<div class="facelist-div bookview-face"></div>');
     } else {
-      // 直接插入
-      insetCustomContent(ubb, ".content [name='book_content']", true);
+      // 发布帖子
+      $(".content .book_view_add_height").eq(1).after('<div class="facelist-div bookview-face"></div>');
     }
+
+    const faceListHtml = [];
+    const faceList = [...defaultFaceList, ...diyFaceList];
+    faceList.forEach((faceitem) => {
+      const { name, url } = faceitem;
+      const img = $("<img/>", {
+        class: "facelist-img",
+        src: url,
+        alt: name,
+      });
+      const faceUbb = `[img]${url}[/img]`;
+      $(img).click(() => insetCustomContent(faceUbb, ".content [name='book_content']", true));
+      faceListHtml.push(img);
+    });
+    $(".facelist-div").append(faceListHtml);
   }
   function createUbbListEle() {
+    if (window.location.pathname === "/bbs/book_view_mod.aspx") {
+      // 修改帖子
+      $(".content .centered-container").eq(1).before('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
+    } else {
+      // 发布帖子
+      $(".content .book_view_add_height").eq(1).after('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
+    }
+
     const ubbListHtml = [];
     bookViewUbbList.forEach((ubbItem) => {
-      const span = $(`<span class="ubb-item">${ubbItem.name}</span>`);
-      $(span).click(async () => handleInsert(ubbItem));
-      ubbListHtml.push(span);
+      const { name, needUpload, uploadID, accept } = ubbItem;
+      let ubbEle = "";
+      if (needUpload) {
+        ubbEle = $(`
+          <input type="file" id="${uploadID}" style="display: none;" accept="${accept}" multiple/>
+          <span class="ubb-item">${name}</span>
+        `);
+      } else {
+        ubbEle = $(`<span class="ubb-item">${name}</span>`);
+      }
+      ubbListHtml.push(ubbEle);
     });
-    // $(".content br").eq(1).after('<div class="ubb-list-div"></div>');
-    $(".content .book_view_add_height").eq(1).after('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
     $(".ubb-list-div").append(ubbListHtml);
+
+    bookViewUbbList.forEach((ubbItem) => {
+      const { name, ubb, needUpload, uploadID } = ubbItem;
+      if (needUpload) {
+        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => $(`#${uploadID}`).click());
+        $(`#${uploadID}`).change(function () {
+          const files = this.files;
+          if (files.length > 0) {
+            if (files.length > 5) {
+              notifyBox("一次最多选择 5 个文件", false);
+              return;
+            }
+            // const uploadResults = []; // 存储上传结果的数组
+            (async function () {
+              for (const file of files) {
+                try {
+                  const imgUrl = await uploadFile(file);
+                  // uploadResults.push(imgUrl);
+                  insetCustomContent(`[img]${imgUrl}[/img]`, ".content [name='book_content']", true)
+                } catch (error) {
+                  notifyBox(`文件 ${file.name} 上传失败`, false);
+                  console.error(error);
+                }
+              }
+
+              console.log("所有文件上传完成");
+              // console.log(uploadResults);
+            })();
+          } else {
+            notifyBox("未能获取到文件", false);
+          }
+        });
+      } else {
+        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => insetCustomContent(ubb, ".content [name='book_content']", true));
+      }
+    });
+    function uploadFile(file) {
+      return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        $.ajax({
+          url: "https://img.ink/api/upload",
+          type: "POST",
+          headers: { token: "df517006f658fa9c8fc5acd3a8a1692e" },
+          data: formData,
+          contentType: false,
+          processData: false,
+          success: (response) => {
+            const { code, msg, data } = response;
+            if (code === 200) {
+              resolve(data.url);
+            } else {
+              notifyBox(msg, false);
+              reject();
+            }
+          },
+          error: (error) => {
+            console.error("未知错误，上传失败", error);
+          },
+        });
+      });
+    }
   }
   function createToggleEle() {
     const toggleEle = $(
-      `<span class="custom-toggle-btn" style="font-size:10px;">${getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"}</span>`
+      `<span class="custom-toggle-btn ubb-btn" style="font-size:10px;">${getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"}</span>
+      <span class="custom-toggle-btn face-btn" style="font-size:10px;">${getUserSetting("showBookViewFace") ? "表情折叠" : "表情展开"}</span>
+      `
     );
-    toggleEle.click(function () {
+    if (window.location.pathname === "/bbs/book_view_mod.aspx") {
+      // 修改帖子
+      $(".content .centered-container + br").before(toggleEle);
+    } else {
+      // 发布帖子
+      $(".content #saveDraftButton").before(toggleEle);
+    }
+    // ubb 展开按钮
+    $(".custom-toggle-btn.ubb-btn").click(function () {
+      $(".ubb-list-div").toggle();
       const showBookViewUbb = getUserSetting("showBookViewUbb");
       if (showBookViewUbb) {
         saveUserSetting("showBookViewUbb", false);
-        $(".ubb-list-div").hide();
         $(this).text("展开 UBB");
       } else {
         saveUserSetting("showBookViewUbb", true);
-        $(".ubb-list-div").show();
         $(this).text("折叠 UBB");
       }
     });
-    // $(".content input[name='g']").after(toggleEle);
-    $(".content #saveDraftButton").before(toggleEle);
+    // 表情展开按钮
+    $(".custom-toggle-btn+.face-btn").click(function () {
+      $(".facelist-div").toggle();
+      const showBookViewFace = getUserSetting("showBookViewFace");
+      if (showBookViewFace) {
+        saveUserSetting("showBookViewFace", false);
+        $(this).text("表情展开");
+      } else {
+        saveUserSetting("showBookViewFace", true);
+        $(this).text("表情折叠");
+      }
+    });
   }
 }
 
@@ -820,19 +930,38 @@ function loadEmoji() {
 
 // 复读机(回帖+1)
 function huifuCopy() {
-  $(".reline.list-reply .retext").each(function () {
-    const spanEle = $("<span class='huifu-copy'>+1</span>");
-    $(this).append(spanEle);
-    spanEle.click((e) => {
-      e.stopPropagation();
-      const parentText = $(this).clone().children(".huifu-copy").remove().end().text().trim();
-      insetCustomContent(parentText, ".centered-container .retextarea");
-      scrollToEle(".centered-container .retextarea", 80);
-      setTimeout(() => {
-        getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
-      }, 150);
+  const customLayoutEnabled = localStorage.getItem("customLayoutEnabled");
+  if (customLayoutEnabled) {
+    // 新版回帖
+    $(".forum-post .post-content .retext").each(function () {
+      const spanEle = $("<span class='huifu-copy'>+1</span>");
+      $(this).append(spanEle);
+      spanEle.click((e) => {
+        e.stopPropagation();
+        const parentText = $(this).clone().children(".huifu-copy").remove().end().text().trim();
+        insetCustomContent(parentText, ".centered-container .retextarea");
+        scrollToEle(".centered-container .retextarea", 80);
+        setTimeout(() => {
+          getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
+        }, 150);
+      });
     });
-  });
+  } else {
+    // 旧版回帖
+    $(".reline.list-reply .retext").each(function () {
+      const spanEle = $("<span class='huifu-copy'>+1</span>");
+      $(this).append(spanEle);
+      spanEle.click((e) => {
+        e.stopPropagation();
+        const parentText = $(this).clone().children(".huifu-copy").remove().end().text().trim();
+        insetCustomContent(parentText, ".centered-container .retextarea");
+        scrollToEle(".centered-container .retextarea", 80);
+        setTimeout(() => {
+          getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
+        }, 150);
+      });
+    });
+  }
 }
 
 // 隐藏楼主勋章
@@ -1268,7 +1397,7 @@ function createScriptSetting() {
           </li>-->
 
 
-          <li class="setting-li-title more-setting" style="margin-bottom:0;display: none;"><hr/><b>高级设置</b><hr/></li>
+          <li class="setting-li-title more-setting more-setting-click" style="margin-bottom:0;display: none;"><hr/><b>高级设置</b><hr/></li>
           <li class="more-setting" style="font-size:12px;text-align:center;margin:-16px 0 0;display: none;">使用以下功能前请先熟读并背诵版规(手动狗头.jpg)</li>
           <li class="setting-li-between more-setting" style="display: none;">
             <span>一键吃肉</span>
@@ -1294,7 +1423,7 @@ function createScriptSetting() {
               </label>
             </div>
           </li>
-          <li class="setting-li-between more-setting" style="display: none;">
+          <li class="setting-li-between extra-setting " style="display: none;">
             <span>复读机(回帖+1)</span>
             <div class="switch">
               <input name="showHuifuCopy" value="true" ${
@@ -1306,7 +1435,7 @@ function createScriptSetting() {
               </label>
             </div>
           </li>
-          <li class="setting-li-between more-setting" style="display: none;">
+          <li class="setting-li-between extra-setting" style="display: none;">
             <span>复读机自动提交</span>
             <div class="switch">
               <input name="huifuCopyAutoSubmit" value="true" ${
@@ -1334,7 +1463,7 @@ function createScriptSetting() {
     $(".setting-div .setting-title").click(
       clickCounter(
         ".setting-div .setting-title",
-        function () {
+        () => {
           const showMoreSetting = getUserSetting("showMoreSetting");
           if (showMoreSetting) {
             $(".setting-div .more-setting").hide();
@@ -1348,6 +1477,17 @@ function createScriptSetting() {
         },
         10,
         10
+      )
+    );
+    // 额外设置
+    $(".setting-div .more-setting-click").click(
+      clickCounter(
+        ".setting-div .more-setting-click",
+        () => {
+          $(".setting-div .extra-setting").toggle();
+        },
+        3,
+        3
       )
     );
     // 清除缓存
@@ -1406,6 +1546,14 @@ function createScriptSetting() {
   }
   // 设置 icon
   function createIcon() {
+    // 页面内设置按钮，避免icon被设置为 0 时无法重置设置
+    $(".subtitle2")
+      .append("<span style='color:red;margin-left:15px;'>脚本设置</span>")
+      .find("span")
+      .click(() => {
+        createPopupContainer();
+      });
+
     const windowWidth = $(window).width();
     const bodyContentWidth = $("body").width();
     const iconSize = getUserSetting("settingIconSize") + "px";
@@ -1424,7 +1572,6 @@ function createScriptSetting() {
       .click(() => {
         createPopupContainer();
       });
-    // createPopupContainer();
     // PC端设置右偏移量
     if (windowWidth > bodyContentWidth) {
       const rightOffset = (windowWidth - bodyContentWidth) / 2 + 10;
