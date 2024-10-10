@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.0.0
+// @version         1.1.0
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -33,11 +33,7 @@ const defaultSetting = {
   imgThumbWidth: 100, // 图片缩小后显示宽度
   showFaceList: true, // 回帖表情展开
 
-  fileUploadToken: "", // 图床 token
-  suimoConfig: {
-    email: "",
-    password: "",
-  },
+  suimoToken: "", // 水墨图床 token
 
   showMoreSetting: false, // 高级设置
   oneClickCollectMoney: false, // 一键吃肉
@@ -51,6 +47,7 @@ const customCSS = `
     margin:0;
     padding:0;
   }
+  /* 设置弹出框 样式 */
   .setting-div ul li{
     display:flex;
     margin:10px auto;
@@ -98,7 +95,7 @@ const customCSS = `
     padding-left:10px;
     height:15px;
   }
-
+  /* 开关 样式 */
   .switch {
     position: relative;
     float: left;
@@ -170,7 +167,7 @@ const customCSS = `
   .switch-checkbox:checked + .switch-label .switch-switch {
     right: 0px;
   }
-
+  /* 复读机按钮 样式 */
   .huifu-copy{
     padding:5px 10px;
     text-align:center;
@@ -196,7 +193,7 @@ const customCSS = `
     cursor: pointer;
     border-radius: 5px;
   }
-
+  /* 表情增强 样式 */
   .facelist-div{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -214,11 +211,11 @@ const customCSS = `
     width:40px;
     height:40px;
   }
-
+  /* ubb 增强 样式 */
   .ubb-list-div{
     display:flex;
     flex-wrap: wrap;
-    gap: 4px 1px;
+    gap: 4px 4px;
     justify-content: space-between;
     margin: 0 1%;
     padding:5px;
@@ -237,14 +234,44 @@ const customCSS = `
     text-decoration: none;
     border-radius:30px;
   }
-  .ubb-list-div > .ubb-item:last-child{
-  color:red;
-  }
 
   .clear-setting{
     color:#3d68a8;
     text-decoration: underline;
     margin-left:-4px;
+  }
+
+  /* 等待提示框 样式 */
+  .wait-box-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+  }
+  .wait-box-modal {
+    background: white;
+    padding: 20px 20px 10px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .wait-box-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #09f;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 // 论坛自带表情
@@ -529,9 +556,9 @@ const diyFaceList = [
 // ubb
 const bookViewUbbList = [
   { name: "超链接", ubb: "[url=网址]文字说明[/url]" },
-  { name: "图片", ubb: "[img]图片链接[/img]", needUpload: true, uploadID: "upload-img", accept: "image/*" },
-  { name: "视频", ubb: "[movie]视频直链地址[/movie]", needUpload: true, uploadID: "upload-video", accept: "video/*" },
-  { name: "音频", ubb: "[audio]音频直链地址[/audio]", needUpload: true, uploadID: "upload-video", accept: "audio/*" },
+  { name: "图片", ubb: "[img]图片链接[/img]", needUpload: true, uploadFileType: "img", accept: "image/*" },
+  { name: "视频", ubb: "[movie]视频直链地址[/movie]", needUpload: false, uploadFileType: "movie", accept: "video/*" },
+  { name: "音频", ubb: "[audio]音频直链地址[/audio]", needUpload: false, uploadFileType: "audio", accept: "audio/*" },
   { name: "文字颜色", ubb: "[forecolor=red]红色文字[/forecolor]" },
   { name: "代码", ubb: "[text]代码内容[/text]" },
   { name: "换行", ubb: "///" },
@@ -540,6 +567,8 @@ const bookViewUbbList = [
   { name: "斜体", ubb: "[i]文字[/i]" },
   { name: "下划线", ubb: "[u]文字[/u]" },
   { name: "删除线", ubb: "[strike]文字[/strike]" },
+  { name: "QQ音乐", ubb: "[qqmusic]QQ音乐歌曲ID，或者包含歌曲ID的分享链接[/qqmusic]" },
+  { name: "网易云音乐", ubb: "[wymusic]网易云音乐歌曲ID，或者包含歌曲ID的分享链接[/wymusic]" },
   { name: "拨号", ubb: "[call]手机号码[/call]" },
   { name: "发短信", ubb: "[url=sms:手机号码?body=短信内容]点此发送[/url]" },
   { name: "当前日期&时间", ubb: "[now]" },
@@ -683,6 +712,7 @@ function bookViewAddUbb() {
   !getUserSetting("showBookViewUbb") && $(".ubb-list-div").hide();
   !getUserSetting("showBookViewFace") && $(".facelist-div.bookview-face").hide();
 
+  // 表情
   function createFaceListEle() {
     if (window.location.pathname === "/bbs/book_view_mod.aspx") {
       // 修改帖子
@@ -707,6 +737,7 @@ function bookViewAddUbb() {
     });
     $(".facelist-div").append(faceListHtml);
   }
+  // ubb
   function createUbbListEle() {
     if (window.location.pathname === "/bbs/book_view_mod.aspx") {
       // 修改帖子
@@ -716,13 +747,14 @@ function bookViewAddUbb() {
       $(".content .book_view_add_height").eq(1).after('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
     }
 
+    // 生成 ubb 按钮
     const ubbListHtml = [];
     bookViewUbbList.forEach((ubbItem) => {
-      const { name, needUpload, uploadID, accept } = ubbItem;
+      const { name, needUpload, uploadFileType, accept } = ubbItem;
       let ubbEle = "";
       if (needUpload) {
         ubbEle = $(`
-          <input type="file" id="${uploadID}" style="display: none;" accept="${accept}" multiple/>
+          <input type="file" id="upload-${uploadFileType}" style="display: none;" accept="${accept}" multiple/>
           <span class="ubb-item">${name}</span>
         `);
       } else {
@@ -731,54 +763,73 @@ function bookViewAddUbb() {
       ubbListHtml.push(ubbEle);
     });
     $(".ubb-list-div").append(ubbListHtml);
-
+    // 设置 ubb 点击功能
     bookViewUbbList.forEach((ubbItem) => {
-      const { name, ubb, needUpload, uploadID } = ubbItem;
+      const { name, ubb, needUpload, uploadFileType } = ubbItem;
       if (needUpload) {
-        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => $(`#${uploadID}`).click());
-        $(`#${uploadID}`).change(function () {
+        // 上传文件
+        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => $(`#upload-${uploadFileType}`).click());
+        $(`#upload-${uploadFileType}`).change(function () {
           const files = this.files;
           if (files.length > 0) {
-            if (files.length > 5) {
-              notifyBox("一次最多选择 5 个文件", false);
+            if (files.length > 10) {
+              notifyBox("一次最多选择 10 个文件", false);
               return;
             }
-            // const uploadResults = []; // 存储上传结果的数组
+            // 上传等待提示
+            showWaitBox("上传中…");
+            const uploadResults = []; // 存储上传结果的数组
             (async function () {
               for (const file of files) {
                 try {
-                  const imgUrl = await uploadFile(file);
-                  // uploadResults.push(imgUrl);
-                  insetCustomContent(`[img]${imgUrl}[/img]`, ".content [name='book_content']", true)
+                  switch (uploadFileType) {
+                    case "img":
+                      const fileUrl = await uploadFile(file, "https://img.ink/api/upload", { token: getUserSetting("suimoToken") });
+                      uploadResults.push(fileUrl);
+                      insetCustomContent(`[img]${fileUrl}[/img]`, ".content [name='book_content']", true);
+                      break;
+                    case "movie":
+                      insetCustomContent(`[movie]${fileUrl}[/movie]`, ".content [name='book_content']", true);
+                      break;
+                    case "audio":
+                      insetCustomContent(`[audio]${fileUrl}[/audio]`, ".content [name='book_content']", true);
+                      break;
+                    default:
+                      break;
+                  }
                 } catch (error) {
                   notifyBox(`文件 ${file.name} 上传失败`, false);
                   console.error(error);
                 }
               }
-
-              console.log("所有文件上传完成");
-              // console.log(uploadResults);
+              // 关闭等待提示
+              $(".wait-box-overlay").remove();
+              setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件`), 300);
+              // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
             })();
           } else {
-            notifyBox("未能获取到文件", false);
+            notifyBox("请选择文件", false);
           }
         });
       } else {
-        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => insetCustomContent(ubb, ".content [name='book_content']", true));
+        // 默认 ubb
+        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => {
+          insetCustomContent(ubb, ".content [name='book_content']", true);
+        });
       }
     });
-    function uploadFile(file) {
+    function uploadFile(file, apiUrl, headers) {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
         formData.append("image", file);
 
         $.ajax({
-          url: "https://img.ink/api/upload",
+          url: apiUrl,
           type: "POST",
-          headers: { token: "df517006f658fa9c8fc5acd3a8a1692e" },
           data: formData,
           contentType: false,
           processData: false,
+          headers,
           success: (response) => {
             const { code, msg, data } = response;
             if (code === 200) {
@@ -797,8 +848,12 @@ function bookViewAddUbb() {
   }
   function createToggleEle() {
     const toggleEle = $(
-      `<span class="custom-toggle-btn ubb-btn" style="font-size:10px;">${getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"}</span>
-      <span class="custom-toggle-btn face-btn" style="font-size:10px;">${getUserSetting("showBookViewFace") ? "表情折叠" : "表情展开"}</span>
+      `<span class="custom-toggle-btn ubb-btn" style="font-size:10px;margin-right:0;">${
+        getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"
+      }</span>
+      <span class="custom-toggle-btn face-btn" style="font-size:10px;margin-left:0;">${
+        getUserSetting("showBookViewFace") ? "表情折叠" : "表情展开"
+      }</span>
       `
     );
     if (window.location.pathname === "/bbs/book_view_mod.aspx") {
@@ -1347,55 +1402,18 @@ function createScriptSetting() {
               </label>
             </div>
           </li>
-          <!--<li class="setting-li-between">
-            <span><a href="https://www.superbed.cn/" target="_blank">图床token</a></span>
-            <input style="width:150px;" class="setting-li-input" value="${getUserSetting(
-              "superbedToken"
-            )}" name="superbedToken" id="superbedToken"  type="password" placeholder="为空则为游客上传…"/>
-          </li>
-          <li class="setting-li-tips">用于发帖/回帖图片/视频自动上传</li>-->
           <li class="setting-li-between">
             <span>图片宽度(px)</span>
             <input name="imgThumbWidth" class="setting-li-input" type="number" value="${getUserSetting("imgThumbWidth")}"/>
           </li>
           <li class="setting-li-tips">缩放页面中图片到指定宽度，设置为 0 时不缩放</li>
-          <!--<li class="setting-li-between">
-            <span>回帖表情展开</span>
-            <div class="switch">
-              <input name="showFaceList" value="true" ${
-                getUserSetting("showFaceList") ? "checked" : ""
-              }  class="switch-checkbox" id="showFaceList" type="checkbox">
-              <label class="switch-label" for="showFaceList">
-                <span class="switch-inner" data-on="开" data-off="关"></span>
-                <span class="switch-switch"></span>
-              </label>
-            </div>
-          </li>
           <li class="setting-li-between">
-            <span>展开发帖 UBB</span>
-            <div class="switch">
-              <input name="showBookViewUbb" value="true" ${
-                getUserSetting("showBookViewUbb") ? "checked" : ""
-              }  class="switch-checkbox" id="showBookViewUbb" type="checkbox">
-              <label class="switch-label" for="showBookViewUbb">
-                <span class="switch-inner" data-on="开" data-off="关"></span>
-                <span class="switch-switch"></span>
-              </label>
-            </div>
+            <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床 token</a></span>
+            <input style="width:150px;" class="setting-li-input" value="${getUserSetting(
+              "suimoToken"
+            )}" name="suimoToken" id="suimoToken"  type="password" placeholder="为空则为游客上传…"/>
           </li>
-          <li class="setting-li-between">
-            <span>展开回帖 UBB</span>
-            <div class="switch">
-              <input name="showHuifuUbb" value="true" ${
-                getUserSetting("showHuifuUbb") ? "checked" : ""
-              }  class="switch-checkbox" id="showHuifuUbb" type="checkbox">
-              <label class="switch-label" for="showHuifuUbb">
-                <span class="switch-inner" data-on="开" data-off="关"></span>
-                <span class="switch-switch"></span>
-              </label>
-            </div>
-          </li>-->
-
+          <li class="setting-li-tips">用于发帖/回帖图片自动上传回显</li>
 
           <li class="setting-li-title more-setting more-setting-click" style="margin-bottom:0;display: none;"><hr/><b>高级设置</b><hr/></li>
           <li class="more-setting" style="font-size:12px;text-align:center;margin:-16px 0 0;display: none;">使用以下功能前请先熟读并背诵版规(手动狗头.jpg)</li>
@@ -1821,6 +1839,19 @@ function getUserSetting(name) {
   } catch (error) {
     throw new Error("未知错误，获取设置失败");
   }
+}
+// 等待提示框
+function showWaitBox(msg) {
+  const overlay = $('<div class="wait-box-overlay"></div>');
+  const modal = $('<div class="wait-box-modal"></div>');
+  modal.append('<div class="wait-box-spinner"></div>');
+  modal.append(`<span class="wait-box-text">${msg}</span>`);
+  overlay.append(modal);
+  $("body").append(overlay);
+  overlay.on("click", function (e) {
+    e.stopPropagation();
+  });
+  return overlay;
 }
 
 /**
