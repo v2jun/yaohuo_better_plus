@@ -89,17 +89,23 @@ const customCSS = `
     padding: 5px 10px;
     margin-left: 10px;
   }
-
   .setting-li-input{
-    width:80px;
+    width:50px;
     padding-left:10px;
     height:15px;
   }
+  ::-webkit-input-placeholder {
+    font-size:12px;
+  }
+  ::-moz-placeholder {
+    font-size:12px;
+  }
+
   /* 开关 样式 */
   .switch {
     position: relative;
     float: left;
-    width: 96px;
+    width: 60px;
     margin: 0;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -117,7 +123,6 @@ const customCSS = `
     display: block;
     width: 200%;
     margin-left: -100%;
-    transition: margin 0.3s ease-in 0s;
   }
   .switch-inner::before,
   .switch-inner::after {
@@ -149,17 +154,16 @@ const customCSS = `
   }
   .switch-switch {
     position: absolute;
+    top: 0;
+    bottom: 0;
+    /*right: 72px;*/
     display: block;
     width: 14px;
     height: 14px;
     margin: 3px;
     background: #FFFFFF;
-    top: 0;
-    bottom: 0;
-    right: 72px;
     border: 2px solid #999999;
     border-radius: 50%;
-    transition: all 0.3s ease-in 0s;
   }
   .switch-checkbox:checked + .switch-label .switch-inner {
     margin-left: 0;
@@ -237,7 +241,6 @@ const customCSS = `
 
   .clear-setting{
     color:#3d68a8;
-    text-decoration: underline;
     margin-left:-4px;
   }
 
@@ -754,8 +757,8 @@ function bookViewAddUbb() {
       let ubbEle = "";
       if (needUpload) {
         ubbEle = $(`
-          <input type="file" id="upload-${uploadFileType}" style="display: none;" accept="${accept}" multiple/>
-          <span class="ubb-item">${name}</span>
+            <input type="file" id="upload-${uploadFileType}" style="display: none;" accept="${accept}" multiple/>
+            <span class="ubb-item">${name}</span>
         `);
       } else {
         ubbEle = $(`<span class="ubb-item">${name}</span>`);
@@ -767,8 +770,15 @@ function bookViewAddUbb() {
     bookViewUbbList.forEach((ubbItem) => {
       const { name, ubb, needUpload, uploadFileType } = ubbItem;
       if (needUpload) {
-        // 上传文件
-        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => $(`#upload-${uploadFileType}`).click());
+        // 文件选择
+        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => {
+          if (getUserSetting("suimoToken").length < 5) {
+            insetCustomContent(ubb, ".content [name='book_content']", true);
+          } else {
+            $(`#upload-${uploadFileType}`).click();
+          }
+        });
+        // 文件选择回调事件
         $(`#upload-${uploadFileType}`).change(function () {
           const files = this.files;
           if (files.length > 0) {
@@ -798,13 +808,15 @@ function bookViewAddUbb() {
                       break;
                   }
                 } catch (error) {
-                  notifyBox(`文件 ${file.name} 上传失败`, false);
+                  // notifyBox(`文件 ${file.name} 上传失败`, false);
                   console.error(error);
                 }
               }
               // 关闭等待提示
               $(".wait-box-overlay").remove();
-              setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件`), 300);
+              if (uploadResults.length > 0) {
+                setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件`), 300);
+              }
               // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
             })();
           } else {
@@ -893,6 +905,7 @@ function bookViewAddUbb() {
 // 修改图片大小
 function changeImgSize() {
   const imgThumbWidth = getUserSetting("imgThumbWidth");
+  if (imgThumbWidth <= 0) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
   $("head").append(`<style>.img-thumb{/* width:30%; */max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
 
   $("img").each(function () {
@@ -985,7 +998,7 @@ function loadEmoji() {
 
 // 复读机(回帖+1)
 function huifuCopy() {
-  const customLayoutEnabled = localStorage.getItem("customLayoutEnabled");
+  const customLayoutEnabled = JSON.parse(localStorage.getItem("customLayoutEnabled"));
   if (customLayoutEnabled) {
     // 新版回帖
     $(".forum-post .post-content .retext").each(function () {
@@ -1368,6 +1381,13 @@ function createScriptSetting() {
               <a href="https://github.com/v2jun/yaohuo_better_plus" target="_blank">Github</a>
             </span>
           </li>
+          <li class="setting-li-between">
+            <span>重置设置</span>
+            <span class='clear-setting'>点击运行</span>
+          </li>
+          <li class="setting-li-tips">
+            <span>如出现玄学bug，可尝试重置脚本设置</span>
+          </li>
 
           <li class="setting-li-title"><hr/><b>设置</b><hr/></li>
           <li class="setting-li-between">
@@ -1375,8 +1395,7 @@ function createScriptSetting() {
             <input name="settingIconSize" class="setting-li-input" type="number" value="${getUserSetting("settingIconSize")}"/>
           </li>
           <li class="setting-li-tips">
-            <span>设置入口图标大小，设置为 0 时不显示，设置内容存储于 localStorage，需要重新显示请</span>
-            <span class='clear-setting'>重置设置</span>
+            <span>设置入口图标大小，设置为 0 时不显示</span>
           </li>
           <li class="setting-li-between">
             <span>一键回到顶部/底部</span>
@@ -1408,10 +1427,10 @@ function createScriptSetting() {
           </li>
           <li class="setting-li-tips">缩放页面中图片到指定宽度，设置为 0 时不缩放</li>
           <li class="setting-li-between">
-            <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床 token</a></span>
-            <input style="width:150px;" class="setting-li-input" value="${getUserSetting(
+            <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床token</a></span>
+            <input style="width:100px;" class="setting-li-input" value="${getUserSetting(
               "suimoToken"
-            )}" name="suimoToken" id="suimoToken"  type="password" placeholder="为空则为游客上传…"/>
+            )}" name="suimoToken" id="suimoToken"  type="password" placeholder="为空则为不上传…"/>
           </li>
           <li class="setting-li-tips">用于发帖/回帖图片自动上传回显</li>
 
