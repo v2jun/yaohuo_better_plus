@@ -32,6 +32,10 @@ const defaultSetting = {
   showHuifuUbb: false, // 回帖 ubb 展开
   imgThumbWidth: 100, // 图片缩小后显示宽度
   showFaceList: true, // 回帖表情展开
+  useRight: false, // 下一页显示在右边
+  autoLoadMoreBookList: false, // 帖子列表自动加载更多
+  autoLoadMoreHuifuList: false, // 回复列表自动加载更多
+  openLayerForBook: false, // pc 端帖子在弹窗中打开
 
   suimoToken: "", // 水墨图床 token
 
@@ -652,9 +656,148 @@ const settingIconBase64 =
     executeFunctionForURL(/^\/bbs-.*\.html$/, huifuAddUbb, true);
     executeFunctionForURL(/^\/bbs-.*\.html$/, loadEmoji, true);
     executeFunctionForURL(/^\/bbs-.*\.html$/, changeImgSize, true);
+    userSetting["useRight"] && executeFunctionForURL("/bbs/book_list.aspx", useRightNextBtn);
+    userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
+    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/, autoLoadMoreHuifuList, true);
+    userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
   });
 })();
 
+// PC端点击帖子弹窗打开
+function openLayer(url) {
+  if (!isPC()) return;
+  // 监听点击事件
+  $(document)
+    .off("click", ".listdata .topic-link")
+    .on("click", ".listdata .topic-link", function (event) {
+      event.preventDefault(); // 阻止默认链接行为
+      const url = $(this).attr("href"); // 获取链接的 href 属性
+      openLayer(url);
+    });
+  if (!url || url.length < 1) return;
+  // 创建背景层
+  let background_layer = $("<div>").css({
+    display: "none",
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "gray",
+    zIndex: "1001",
+    opacity: "0.8",
+  });
+  // 创建弹出层
+  let open_layer = $("<div>").css({
+    display: "none",
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "80%",
+    maxWidth: "720px",
+    height: "96%",
+    border: "1px solid lightblue",
+    borderRadius: "10px",
+    boxShadow: "4px 4px 10px #171414",
+    backgroundColor: "white",
+    zIndex: "1002",
+    overflow: "auto",
+    margin: "0",
+    padding: "0",
+  });
+  // 创建 iframe
+  let iframe = $("<iframe>")
+    .attr("src", url || "")
+    .css({
+      width: "100%",
+      height: "100%",
+      border: "0",
+      display: "block",
+    });
+
+  // 将 iframe 添加到弹出层
+  open_layer.append(iframe);
+  // 将弹出层和背景层添加到 body
+  $("body").append(open_layer).append(background_layer);
+  // 显示弹出层和背景层
+  open_layer.show();
+  background_layer.show();
+  // 点击背景层时关闭弹出层
+  background_layer.on("click", function () {
+    open_layer.remove();
+    background_layer.remove();
+  });
+}
+
+// 回复列表自动加载更多
+function autoLoadMoreHuifuList() {
+  // 获取加载更多按钮
+  const loadMoreButton = $(".viewContent .more #YH_show_tip");
+  // 设置一个标志位，用于判断是否已经触发过点击事件
+  let hasTriggered = false;
+
+  // 监听滚动事件
+  $(window).scroll(function () {
+    // 获取页面滚动的位置和文档高度
+    let scrollTop = $(this).scrollTop();
+    let windowHeight = $(this).height();
+    let documentHeight = $(document).height();
+    // 检查按钮的文本内容是否包含“加载更多”
+    if (loadMoreButton.text().includes("加载更多")) {
+      // 检查是否滚动到距离底部400px，并且还没有触发过点击事件
+      if (documentHeight - (scrollTop + windowHeight) <= 400 && !hasTriggered) {
+        // 自动点击加载更多按钮
+        loadMoreButton.click();
+        // 设置标志位为已触发
+        hasTriggered = true;
+      } else if (documentHeight - (scrollTop + windowHeight) > 400) {
+        // 如果滚动距离超过200px，重置标志位
+        hasTriggered = false;
+      }
+    }
+  });
+}
+// 帖子列表自动加载更多
+function autoLoadMoreBookList() {
+  // 获取加载更多按钮
+  const loadMoreButton = $(".btBox .bt1 #KL_loadmore");
+  // 设置一个标志位，用于判断是否已经触发过点击事件
+  let hasTriggered = false;
+
+  // 监听滚动事件
+  $(window).scroll(function () {
+    // 获取页面滚动的位置和文档高度
+    let scrollTop = $(this).scrollTop();
+    let windowHeight = $(this).height();
+    let documentHeight = $(document).height();
+    // 检查按钮的文本内容是否包含“加载更多”
+    if (loadMoreButton.text().includes("加载更多")) {
+      // 检查是否滚动到距离底部100px，并且还没有触发过点击事件
+      if (documentHeight - (scrollTop + windowHeight) <= 100 && !hasTriggered) {
+        // 自动点击加载更多按钮
+        loadMoreButton.click();
+        // 设置标志位为已触发
+        hasTriggered = true;
+      } else if (documentHeight - (scrollTop + windowHeight) > 100) {
+        // 如果滚动距离超过200px，重置标志位
+        hasTriggered = false;
+      }
+    }
+  });
+}
+// 帖子页面上一页，下一页按钮互换位置
+function useRightNextBtn() {
+  // 获取上一页和下一页的链接
+  const prevLink = $('.btBox .bt2 a:contains("上一页")');
+  const nextLink = $('.btBox .bt2 a:contains("下一页")');
+
+  // 交换它们的位置
+  prevLink.after(nextLink.clone());
+  nextLink.after(prevLink.clone());
+  prevLink.remove();
+  nextLink.remove();
+}
 // 回帖 ubb 增强
 function huifuAddUbb() {
   $(".kuaisuhuifu a").remove(); // 移除帖子快速回复旁“文件回帖”按钮
@@ -1433,6 +1576,57 @@ function createScriptSetting() {
             )}" name="suimoToken" id="suimoToken"  type="password" placeholder="为空则为不上传…"/>
           </li>
           <li class="setting-li-tips">用于发帖/回帖图片自动上传回显</li>
+          <li class="setting-li-between">
+            <span>我要用右手</span>
+            <div class="switch">
+              <input name="useRight" value="true" ${
+                getUserSetting("useRight") ? "checked" : ""
+              }  class="switch-checkbox" id="useRight" type="checkbox">
+              <label class="switch-label" for="useRight">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-tips">将帖子列表的下一页按钮显示在右边</li>
+          <li class="setting-li-between">
+            <span>帖子自动加载</span>
+            <div class="switch">
+              <input name="autoLoadMoreBookList" value="true" ${
+                getUserSetting("autoLoadMoreBookList") ? "checked" : ""
+              }  class="switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
+              <label class="switch-label" for="autoLoadMoreBookList">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-between">
+            <span>回复自动加载</span>
+            <div class="switch">
+              <input name="autoLoadMoreHuifuList" value="true" ${
+                getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
+              }  class="switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
+              <label class="switch-label" for="autoLoadMoreHuifuList">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-between">
+            <span>帖子在弹窗中打开</span>
+            <div class="switch">
+              <input name="openLayerForBook" value="true" ${
+                getUserSetting("openLayerForBook") ? "checked" : ""
+              }  class="switch-checkbox" id="openLayerForBook" type="checkbox">
+              <label class="switch-label" for="openLayerForBook">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-tips">仅在PC端生效，且弹窗中无法使用脚本</li>
+
 
           <li class="setting-li-title more-setting more-setting-click" style="margin-bottom:0;display: none;"><hr/><b>高级设置</b><hr/></li>
           <li class="more-setting" style="font-size:12px;text-align:center;margin:-16px 0 0;display: none;">使用以下功能前请先熟读并背诵版规(手动狗头.jpg)</li>
@@ -1669,6 +1863,19 @@ function checkLocation() {
 
 /* ================================================== 自定义方法开始 ================================================== */
 
+// 判断是否为pc端浏览器打开
+function isPC() {
+  let userAgentInfo = navigator.userAgent;
+  let mobileAgents = ["Android", "iPhone", "iPad", "iPod", "Windows Phone"];
+  let isPC = true;
+  for (let i = 0; i < mobileAgents.length; i++) {
+    if (userAgentInfo.indexOf(mobileAgents[i]) > -1) {
+      isPC = false;
+      break;
+    }
+  }
+  return isPC;
+}
 // 滚动页面到指定标签，并显示在屏幕中间
 function scrollToEle(toEle, animateTime = 500) {
   const targetElement = $(toEle); // 使用适当的选择器选择目标元素
