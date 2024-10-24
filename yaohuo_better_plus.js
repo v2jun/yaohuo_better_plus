@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.1.0
+// @version         1.3.1
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -37,6 +37,7 @@ const defaultSetting = {
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
   openLayerForBook: false, // pc 端帖子在弹窗中打开
 
+  imgUploadSelOpt: 1, // 使用图床
   suimoToken: "", // 水墨图床 token
 
   showMoreSetting: false, // 高级设置
@@ -279,6 +280,86 @@ const customCSS = `
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  .huifu-ubb-list-div{
+    margin: 0 1%;
+    padding:10px;
+    font-size:12px;
+    border: 1px solid #d4d4d4;
+    border-radius: 8px;
+  }
+  .huifu-ubb-list-title{
+    height:14px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    color:red;
+  }
+  .huifu-ubb-list-title hr{
+    flex:1;
+  }
+  .huifu-ubb-list-title hr:nth-of-type(1){
+    margin-right:10px;
+  }
+  .huifu-ubb-list-title hr:nth-of-type(2){
+    margin-left:10px;
+  }
+  .huifu-ubb-box{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 4px 4px;
+    justify-content: space-between;
+    margin:6px 0;
+  }
+
+  .input-popup-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  .input-popup {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 600px;
+    max-width:90%;
+  }
+  .input-popup-label {
+    display: block;
+    font-weight: bold;
+  }
+  .input-popup-textarea {
+    width: 100%;
+    min-height: 40px;
+    resize: vertical;
+  }
+  .input-popup-buttons {
+    text-align: center;
+  }
+  .input-popup-submit-btn, .input-popup-cancel-btn {
+    margin: 0 10px;
+    border:0;
+  }
+  .input-popup-submit-btn{
+    background-color: #1677ff;
+    color: #fff;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-left: 10px;
+  }
+  .input-popup-cancel-btn {
+    background-color: #999;
+    color: #fff;
+    border-radius: 5px;
+    padding: 5px 10px;
   }
 `;
 // 论坛自带表情
@@ -560,71 +641,174 @@ const diyFaceList = [
     name: "有鬼",
   },
 ];
-// ubb
-const bookViewUbbList = [
+// 论坛自带 ubb
+const defaultUbbList = [
   { name: "超链接", ubb: "[url=网址]文字说明[/url]" },
-  { name: "图片", ubb: "[img]图片链接[/img]", needUpload: true, uploadFileType: "img", accept: "image/*" },
-  { name: "视频", ubb: "[movie]视频直链地址[/movie]", needUpload: false, uploadFileType: "movie", accept: "video/*" },
-  { name: "音频", ubb: "[audio]音频直链地址[/audio]", needUpload: false, uploadFileType: "audio", accept: "audio/*" },
+  { name: "图片", ubb: "[img]图片链接[/img]" },
+  { name: "视频", ubb: "[movie]视频直链地址[/movie]" },
+  { name: "音频", ubb: "[audio]音频直链地址[/audio]" },
   { name: "文字颜色", ubb: "[forecolor=red]红色文字[/forecolor]" },
-  { name: "代码", ubb: "[text]代码内容[/text]" },
+  { name: "代码块", ubb: "[code]代码内容[/code]" },
+  { name: "全角符号转半角", ubb: "[text]代码内容[/text]" },
   { name: "换行", ubb: "///" },
   { name: "分割线", ubb: "[hr]" },
   { name: "加粗", ubb: "[b]文字[/b]" },
   { name: "斜体", ubb: "[i]文字[/i]" },
   { name: "下划线", ubb: "[u]文字[/u]" },
   { name: "删除线", ubb: "[strike]文字[/strike]" },
-  { name: "QQ音乐", ubb: "[qqmusic]QQ音乐歌曲ID，或者包含歌曲ID的分享链接[/qqmusic]" },
-  { name: "网易云音乐", ubb: "[wymusic]网易云音乐歌曲ID，或者包含歌曲ID的分享链接[/wymusic]" },
+  {
+    name: "QQ音乐",
+    ubb: "[qqmusic]QQ音乐歌曲ID，或者包含歌曲ID的分享链接[/qqmusic]",
+  },
+  {
+    name: "网易云音乐",
+    ubb: "[wymusic]网易云音乐歌曲ID，或者包含歌曲ID的分享链接[/wymusic]",
+  },
   { name: "拨号", ubb: "[call]手机号码[/call]" },
   { name: "发短信", ubb: "[url=sms:手机号码?body=短信内容]点此发送[/url]" },
   { name: "当前日期&时间", ubb: "[now]" },
   { name: "倒计时天数", ubb: "[codo]2030-01-01[/codo]" },
-  // { name: "抖音解析", ubb: "", needInput: true },
-  // { name: "快手解析", ubb: "", needInput: true },
-  // { name: "B站解析", ubb: "", needInput: true },
-  // { name: "屋舍文件", ubb: "", clickFunc: (e) => {} },
-  // { name: "短链生成", ubb: "", needInput: true },
 ];
-// 回帖增强 ubb
-const huifuUbbList = [
-  {
-    name: "你真该死",
-    ubb: "[audio]https://file.uhsea.com/2304/3deb45e90564252bf281f47c7b47a153KJ.mp3[/audio]",
-  },
-  {
-    name: "卧槽",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000c39llkp400egrpaivp30&ratio=1080p[/audio]",
-  },
-  {
-    name: "我不信",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0200ff10000bop9e9evld7780im485g&ratio=1080p[/audio]",
-  },
-  {
-    name: "啊~",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000c27pgb9j1vdnlib21bmg&ratio=1080p[/audio]",
-  },
-  {
-    name: "举报",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0200fg10000clgc3l3c77u37ec4o06g&ratio=1080p[/audio]",
-  },
-  {
-    name: "双手插兜",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0d00fg10000cl3317rc77uboqgts6s0&ratio=1080p[/audio]",
-  },
-  {
-    name: "你干嘛~",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000ckbjafrc77uc4heo85r0&ratio=1080p[/audio]",
-  },
-  {
-    name: "天才",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0d00fg10000cco09b3c77ufcav057og&ratio=1080p[/audio]",
-  },
-  {
-    name: "垃圾",
-    ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000ckei8ejc77u3qug3fnc0&ratio=1080p[/audio]",
-  },
-];
+// 增强 ubb
+const betterUbbList = {
+  txt: [
+    {
+      name: "超链接",
+      inputTitle: ["网址", "文字说明"],
+      ubb: (inputValues) => `[url=${inputValues[0]}]${inputValues[1]}[/url]`,
+    },
+    {
+      name: "红字",
+      inputTitle: ["文本内容"],
+      ubb: (inputValues) => `[forecolor=red]${inputValues[0]}[/forecolor]`,
+    },
+    {
+      name: "加粗",
+      inputTitle: ["文本内容"],
+      ubb: (inputValues) => `[b]${inputValues[0]}[/b]`,
+    },
+    {
+      name: "斜体",
+      inputTitle: ["文本内容"],
+      ubb: (inputValues) => `[i]${inputValues[0]}[/i]`,
+    },
+    {
+      name: "下划线",
+      inputTitle: ["文本内容"],
+      ubb: (inputValues) => `[u]${inputValues[0]}[/u]`,
+    },
+    {
+      name: "删除线",
+      inputTitle: ["文本内容"],
+      ubb: (inputValues) => `[strike]${inputValues[0]}[/strike]`,
+    },
+    {
+      name: "代码",
+      inputTitle: ["代码内容"],
+      ubb: (inputValues) => `[code]${inputValues[0]}[/code]`,
+    },
+    { name: "拨号", inputTitle: ["手机号码"], ubb: (inputValues) => `[call]${inputValues[0]}[/call]` },
+    {
+      name: "发短信",
+      inputTitle: ["手机号码", "短信内容"],
+      ubb: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
+    },
+    {
+      name: "倒计时天数",
+      inputTitle: ["需要倒计时的日期(格式：2030-01-01)"],
+      ubb: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
+    },
+    {
+      name: "QQ音乐",
+      inputTitle: ["QQ音乐歌曲链接或ID"],
+      ubb: (inputValues) => `[qqmusic]${inputValues[0]}[/qqmusic]`,
+    },
+    {
+      name: "网易云音乐",
+      inputTitle: ["网易云音乐歌曲链接或ID"],
+      ubb: (inputValues) => `[wymusic]${inputValues[0]}[/wymusic]`,
+    },
+    // { name: "短链生成" },
+    {
+      name: "图片",
+      upload: {
+        apiUrl: "",
+        type: "img",
+        accept: "image/*",
+      },
+    },
+    {
+      name: "视频",
+      inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
+      ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+      // upload: {
+      //   apiUrl: "",
+      //   type: "movie",
+      //   accept: "video/*",
+      // },
+    },
+    {
+      name: "音频",
+      inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
+      ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+      // upload: {
+      //   apiUrl: "",
+      //   type: "audio",
+      //   accept: "audio/*",
+      // },
+    },
+    {
+      name: "抖音解析",
+      inputTitle: ["链接(不需要去除中文和多余字符)"],
+      apiUrl: "https://v.695402.xyz/dyzl",
+      ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    },
+    { name: "快手解析", inputTitle: ["链接(不需要去除中文和多余字符)"], apiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+    { name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], apiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+    { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], apiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+    // { name: "屋舍文件" },
+  ],
+  audio: [
+    {
+      name: "你真该死啊",
+      ubb: "[audio]https://file.uhsea.com/2304/3deb45e90564252bf281f47c7b47a153KJ.mp3[/audio]",
+    },
+    {
+      name: "卧槽，无情",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000c39llkp400egrpaivp30&ratio=1080p[/audio]",
+    },
+    {
+      name: "我不信",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0200ff10000bop9e9evld7780im485g&ratio=1080p[/audio]",
+    },
+    {
+      name: "啊~",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000c27pgb9j1vdnlib21bmg&ratio=1080p[/audio]",
+    },
+    {
+      name: "举报",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0200fg10000clgc3l3c77u37ec4o06g&ratio=1080p[/audio]",
+    },
+    {
+      name: "双手插兜",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0d00fg10000cl3317rc77uboqgts6s0&ratio=1080p[/audio]",
+    },
+    {
+      name: "你干嘛~",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000ckbjafrc77uc4heo85r0&ratio=1080p[/audio]",
+    },
+    {
+      name: "天才",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0d00fg10000cco09b3c77ufcav057og&ratio=1080p[/audio]",
+    },
+    {
+      name: "垃圾",
+      ubb: "[audio]https://aweme.snssdk.com/aweme/v1/play/?video_id=v0300fg10000ckei8ejc77u3qug3fnc0&ratio=1080p[/audio]",
+    },
+  ],
+  video: [],
+};
+
 const settingIconBase64 =
   "data:image/png;base64,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";
 /* ================================================== 变量结束 ================================================== */
@@ -642,12 +826,11 @@ const settingIconBase64 =
     saveUserSetting("firstLoadScript", false);
   }
 
-  // 确保在页面加载完成后再执行代码，否则 jquery 可能会获取不到 document 内容
+  addCustomStyle();
+  userSetting["showTopAndDownBtn"] && addTopAndDown();
+  // 页面解析完成后再执行代码，否则 jquery 可能会获取不到 document 内容导致脚本执行失败
   $(document).ready(() => {
-    addCustomStyle();
     createScriptSetting();
-
-    userSetting["showTopAndDownBtn"] && addTopAndDown();
     userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
     userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^\/bbs-.*\.html$/, speedEatMoney, true);
     userSetting["hideXunzhang"] && executeFunctionForURL(/^\/bbs-.*\.html$/, hideXunzhang, true);
@@ -655,11 +838,14 @@ const settingIconBase64 =
     executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx$/, bookViewAddUbb, true);
     executeFunctionForURL(/^\/bbs-.*\.html$/, huifuAddUbb, true);
     executeFunctionForURL(/^\/bbs-.*\.html$/, loadEmoji, true);
-    executeFunctionForURL(/^\/bbs-.*\.html$/, changeImgSize, true);
     userSetting["useRight"] && executeFunctionForURL("/bbs/book_list.aspx", useRightNextBtn);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
     userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/, autoLoadMoreHuifuList, true);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
+  });
+  // 页面加载完成后再执行代码，否则页面资源可能会获取不到，比如图片等
+  $(window).on("load", function () {
+    executeFunctionForURL(/^\/bbs-.*\.html$/, changeImgSize, true);
   });
 })();
 
@@ -729,60 +915,55 @@ function openLayer(url) {
     background_layer.remove();
   });
 }
-
 // 回复列表自动加载更多
 function autoLoadMoreHuifuList() {
   // 获取加载更多按钮
-  const loadMoreButton = $(".viewContent .more #YH_show_tip");
+  const loadMoreButton = $(".viewContent .more a:contains('加载更多')");
   // 设置一个标志位，用于判断是否已经触发过点击事件
   let hasTriggered = false;
 
   // 监听滚动事件
   $(window).scroll(function () {
     // 获取页面滚动的位置和文档高度
-    let scrollTop = $(this).scrollTop();
-    let windowHeight = $(this).height();
-    let documentHeight = $(document).height();
-    // 检查按钮的文本内容是否包含“加载更多”
-    if (loadMoreButton.text().includes("加载更多")) {
-      // 检查是否滚动到距离底部400px，并且还没有触发过点击事件
-      if (documentHeight - (scrollTop + windowHeight) <= 400 && !hasTriggered) {
-        // 自动点击加载更多按钮
-        loadMoreButton.click();
-        // 设置标志位为已触发
-        hasTriggered = true;
-      } else if (documentHeight - (scrollTop + windowHeight) > 400) {
-        // 如果滚动距离超过200px，重置标志位
-        hasTriggered = false;
-      }
+    const scrollTop = $(this).scrollTop();
+    const windowHeight = $(this).height();
+    const documentHeight = $(document).height();
+    // 检查是否滚动到距离底部400px，并且还没有触发过点击事件
+    if (documentHeight - (scrollTop + windowHeight) <= 500 && !hasTriggered) {
+      // 自动点击加载更多按钮
+      console.log("%c ===> [ 自动点击加载回复 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
+      loadMoreButton.click();
+      // 设置标志位为已触发
+      hasTriggered = true;
+    } else if (documentHeight - (scrollTop + windowHeight) > 500) {
+      // 如果滚动距离超过200px，重置标志位
+      hasTriggered = false;
     }
   });
 }
 // 帖子列表自动加载更多
 function autoLoadMoreBookList() {
   // 获取加载更多按钮
-  const loadMoreButton = $(".btBox .bt1 #KL_loadmore");
+  const loadMoreButton = $(".btBox .bt1 a:contains('加载更多')");
   // 设置一个标志位，用于判断是否已经触发过点击事件
   let hasTriggered = false;
 
   // 监听滚动事件
   $(window).scroll(function () {
     // 获取页面滚动的位置和文档高度
-    let scrollTop = $(this).scrollTop();
-    let windowHeight = $(this).height();
-    let documentHeight = $(document).height();
-    // 检查按钮的文本内容是否包含“加载更多”
-    if (loadMoreButton.text().includes("加载更多")) {
-      // 检查是否滚动到距离底部100px，并且还没有触发过点击事件
-      if (documentHeight - (scrollTop + windowHeight) <= 100 && !hasTriggered) {
-        // 自动点击加载更多按钮
-        loadMoreButton.click();
-        // 设置标志位为已触发
-        hasTriggered = true;
-      } else if (documentHeight - (scrollTop + windowHeight) > 100) {
-        // 如果滚动距离超过200px，重置标志位
-        hasTriggered = false;
-      }
+    const scrollTop = $(this).scrollTop();
+    const windowHeight = $(this).height();
+    const documentHeight = $(document).height();
+    // 检查是否滚动到距离底部200px，并且还没有触发过点击事件
+    if (documentHeight - (scrollTop + windowHeight) <= 200 && !hasTriggered) {
+      // 自动点击加载更多按钮
+      console.log("%c ===> [ 自动点击加载帖子 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
+      loadMoreButton.click();
+      // 设置标志位为已触发
+      hasTriggered = true;
+    } else if (documentHeight - (scrollTop + windowHeight) > 200) {
+      // 如果滚动距离超过200px，重置标志位
+      hasTriggered = false;
     }
   });
 }
@@ -807,29 +988,20 @@ function huifuAddUbb() {
 
   !getUserSetting("showHuifuUbb") && $(".ubb-list-div").hide();
 
-  function handleInsert(item) {
-    const { ubb, isUpload, isInput } = item;
-    if (isUpload) {
-      // 上传文件
-      insetCustomContent(ubb, ".centered-container .retextarea", true);
-    } else if (isInput) {
-      // 输入内容
-      insetCustomContent(ubb, ".centered-container .retextarea", true);
-    } else {
-      // 直接插入
-      insetCustomContent(ubb, ".centered-container .retextarea", true);
-    }
-  }
   function createUbbListEle() {
-    const ubbListHtml = [];
-    const tempList = [...huifuUbbList, ...bookViewUbbList];
-    tempList.forEach((ubbItem) => {
-      const span = $(`<span class="ubb-item">${ubbItem.name}</span>`);
-      $(span).click(() => handleInsert(ubbItem));
-      ubbListHtml.push(span);
-    });
-    $(".viewContent .sticky").after('<div class="ubb-list-div"></div>');
-    $(".ubb-list-div").append(ubbListHtml);
+    const ubbDivEle = `
+      <div class="huifu-ubb-list-div">
+        <span class="huifu-ubb-list-title default-ubb"><hr><b>默认</b><hr></span>
+        <span class="huifu-ubb-box"></span>
+        <span class="huifu-ubb-list-title better-ubb"><hr><b>增强</b><hr></span>
+        <span class="huifu-ubb-box"></span>
+        <span class="huifu-ubb-list-title audio-ubb"><hr><b>音频</b><hr></span>
+        <span class="huifu-ubb-box"></span>
+      </div>
+    `;
+    $(".viewContent .sticky").after(ubbDivEle);
+    createDefaultUbb();
+    createBetterUbb();
   }
   function createToggleEle() {
     const toggleEle = $(`<span class="custom-toggle-btn">${getUserSetting("showHuifuUbb") ? "折叠 UBB" : "展开 UBB"}</span>`);
@@ -846,6 +1018,38 @@ function huifuAddUbb() {
       }
     });
     $(".viewContent .kuaisuhuifu").append(toggleEle);
+  }
+  // 增强 ubb
+  function createBetterUbb() {
+    const betterUbbListHtml = [];
+    betterUbbList.txt.forEach((ubbItem) => {
+      const { name, inputTitle, ubb, upload, apiUrl } = ubbItem;
+      const span = $(`<span class="ubb-item">${name}</span>`);
+      $(span).click(() => {
+        if (inputTitle && inputTitle.length > 0 && !apiUrl) {
+          showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubb(inputResult), ".centered-container .retextarea", true));
+        } else if (apiUrl && apiUrl.length > 0) {
+          showInputPopup(inputTitle, async (inputResult) => {
+            const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
+            await getVideoPlayUrl(targetUrl[0]);
+          });
+        } else if (upload) {
+        }
+      });
+      betterUbbListHtml.push(span);
+    });
+    $(".better-ubb + .huifu-ubb-box").append(betterUbbListHtml);
+  }
+  // 默认 ubb
+  function createDefaultUbb() {
+    const defaultUbbListHtml = [];
+    defaultUbbList.forEach((ubbItem) => {
+      const { name, ubb } = ubbItem;
+      const span = $(`<span class="ubb-item">${name}</span>`);
+      $(span).click(() => insetCustomContent(ubb, ".centered-container .retextarea", true));
+      defaultUbbListHtml.push(span);
+    });
+    $(".default-ubb + .huifu-ubb-box").append(defaultUbbListHtml);
   }
 }
 // 发帖 ubb 增强
@@ -895,7 +1099,7 @@ function bookViewAddUbb() {
 
     // 生成 ubb 按钮
     const ubbListHtml = [];
-    bookViewUbbList.forEach((ubbItem) => {
+    defaultUbbList.forEach((ubbItem) => {
       const { name, needUpload, uploadFileType, accept } = ubbItem;
       let ubbEle = "";
       if (needUpload) {
@@ -910,7 +1114,7 @@ function bookViewAddUbb() {
     });
     $(".ubb-list-div").append(ubbListHtml);
     // 设置 ubb 点击功能
-    bookViewUbbList.forEach((ubbItem) => {
+    defaultUbbList.forEach((ubbItem) => {
       const { name, ubb, needUpload, uploadFileType } = ubbItem;
       if (needUpload) {
         // 文件选择
@@ -937,7 +1141,9 @@ function bookViewAddUbb() {
                 try {
                   switch (uploadFileType) {
                     case "img":
-                      const fileUrl = await uploadFile(file, "https://img.ink/api/upload", { token: getUserSetting("suimoToken") });
+                      const fileUrl = await uploadFile(file, "https://img.ink/api/upload", {
+                        token: getUserSetting("suimoToken"),
+                      });
                       uploadResults.push(fileUrl);
                       insetCustomContent(`[img]${fileUrl}[/img]`, ".content [name='book_content']", true);
                       break;
@@ -1044,17 +1250,15 @@ function bookViewAddUbb() {
     });
   }
 }
-
 // 修改图片大小
 function changeImgSize() {
   const imgThumbWidth = getUserSetting("imgThumbWidth");
   if (imgThumbWidth <= 0) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
-  $("head").append(`<style>.img-thumb{/* width:30%; */max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
+  $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
 
   $("img").each(function () {
     const imageWidth = $(this).width(); // 获取当前图片的显示宽度
-    // const bodyWidth = $("body").width(); // 获取 body 区域的宽度
-    // const percentage = (imageWidth / bodyWidth) * 100; // 计算百分比
+    // 排除表情，不缩放
     if (imgThumbWidth && imageWidth >= 200) {
       $(this).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
     }
@@ -1062,11 +1266,9 @@ function changeImgSize() {
 
   $("body").on("click", "img", function (e) {
     e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
-
     $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
   });
 }
-
 // 帖子页面表情增强
 function loadEmoji() {
   // 移除默认表情展开按钮及弹出内容区域
@@ -1138,7 +1340,6 @@ function loadEmoji() {
     vDiv.insertBefore(".viewContent .centered-container");
   }
 }
-
 // 复读机(回帖+1)
 function huifuCopy() {
   const customLayoutEnabled = JSON.parse(localStorage.getItem("customLayoutEnabled"));
@@ -1174,12 +1375,10 @@ function huifuCopy() {
     });
   }
 }
-
 // 隐藏楼主勋章
 function hideXunzhang() {
   $(".xunzhang").remove();
 }
-
 // 一键吃肉
 function speedEatMoney() {
   const vBtn = $("<span class='custom-toggle-btn'>一键吃肉</span>");
@@ -1227,7 +1426,6 @@ function speedEatMoney() {
   });
   $(".viewContent .kuaisuhuifu").append(vBtn);
 }
-
 // 查询吹牛发布者历史大话选项
 async function chuiniuHistory() {
   const elementsWithText = $("body").find(":contains('自己挑战的只能由其它友友应战！')");
@@ -1298,7 +1496,6 @@ async function chuiniuHistory() {
     });
   }
 }
-
 // 一键回到顶部/底部，在原作者基础上做了删减、改动，原作者发布地址：https://greasyfork.org/zh-CN/scripts/38899-回到顶部-底部
 function addTopAndDown() {
   if (window.self != window.top) return;
@@ -1459,7 +1656,6 @@ function createScriptSetting() {
   function closePopupContainer() {
     // 恢复body内容滚动
     $("body").css("overflow", "auto");
-
     // 移除蒙版和弹出内容容器
     $(".popup-overlay").remove();
   }
@@ -1511,7 +1707,7 @@ function createScriptSetting() {
           <a href="/bbs/userinfo.aspx?touserid=27894" style="font-size:12px;">柠檬没有汁@27894</a>
         </p>
         <ul style="margin:0;padding:0;">
-          <li class="setting-li-title"><hr/><b>关于脚本</b><hr/></li>
+          <li class="setting-li-title"><hr><b>关于脚本</b><hr></li>
           <li class="setting-li-between">
             <span>脚本安装/升级</span>
             <span>
@@ -1532,7 +1728,7 @@ function createScriptSetting() {
             <span>如出现玄学bug，可尝试重置脚本设置</span>
           </li>
 
-          <li class="setting-li-title"><hr/><b>设置</b><hr/></li>
+          <li class="setting-li-title"><hr><b>设置</b><hr></li>
           <li class="setting-li-between">
             <span>设置图标大小(px)</span>
             <input name="settingIconSize" class="setting-li-input" type="number" value="${getUserSetting("settingIconSize")}"/>
@@ -1570,12 +1766,19 @@ function createScriptSetting() {
           </li>
           <li class="setting-li-tips">缩放页面中图片到指定宽度，设置为 0 时不缩放</li>
           <li class="setting-li-between">
+            <span>图床选择</span>
+            <select name='imgUploadSelOpt' class="reset" style="font-size: 12px;width:116px;padding-left:8px;height:25px;">
+              <option value="1" ${getUserSetting("imgUploadSelOpt") == 1 ? "selected" : ""}>美团</option>
+              <option value="2" ${getUserSetting("imgUploadSelOpt") == 2 ? "selected" : ""}>水墨</option>
+            </select>
+          </li>
+          <li class="setting-li-between sel-suimo">
             <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床token</a></span>
             <input style="width:100px;" class="setting-li-input" value="${getUserSetting(
               "suimoToken"
             )}" name="suimoToken" id="suimoToken"  type="password" placeholder="为空则为不上传…"/>
           </li>
-          <li class="setting-li-tips">用于发帖/回帖图片自动上传回显</li>
+          <li class="setting-li-tips sel-suimo"}>用于发帖/回帖图片自动上传回显</li>
           <li class="setting-li-between">
             <span>我要用右手</span>
             <div class="switch">
@@ -1628,7 +1831,7 @@ function createScriptSetting() {
           <li class="setting-li-tips">仅在PC端生效，且弹窗中无法使用脚本</li>
 
 
-          <li class="setting-li-title more-setting more-setting-click" style="margin-bottom:0;display: none;"><hr/><b>高级设置</b><hr/></li>
+          <li class="setting-li-title more-setting more-setting-click" style="margin-bottom:0;display: none;"><hr><b>高级设置</b><hr></li>
           <li class="more-setting" style="font-size:12px;text-align:center;margin:-16px 0 0;display: none;">使用以下功能前请先熟读并背诵版规(手动狗头.jpg)</li>
           <li class="setting-li-between more-setting" style="display: none;">
             <span>一键吃肉</span>
@@ -1680,7 +1883,7 @@ function createScriptSetting() {
           </li>
         </ul>
         <footer>
-          <hr/>
+          <hr>
           <span class="setting-cancel-btn">取消</span>
           <span class="setting-confirm-btn">保存</span>
         </footer>
@@ -1688,6 +1891,20 @@ function createScriptSetting() {
       </div>
     `;
     container.append(vSettingEle);
+    // 监听下拉选择，改变其他元素状态
+    $('form[name="settingForm"]')
+      .find("select")
+      .on("change", function () {
+        const selectName = $(this).attr("name");
+        const selectedValue = $(this).val();
+
+        if (selectName === "imgUploadSelOpt") {
+          if (selectedValue == 1) $(".setting-div .sel-suimo").hide();
+          else if (selectedValue == 2) $(".setting-div .sel-suimo").show();
+        } else {
+          // 执行操作
+        }
+      });
     // 禁止蒙版下的body内容滚动
     $("body").css("overflow", "hidden");
     // 高级设置
@@ -1735,9 +1952,9 @@ function createScriptSetting() {
       debounce(() => {
         const formData = {};
         $('form[name="settingForm"]')
-          .find("input")
+          .find("input, select")
           .each(function () {
-            // 根据不同input type格式化值，否则全部为字符串
+            // 根据不同输入方式格式化值，否则全部为字符串
             if ($(this).is(":checkbox")) {
               formData[this.name] = this.checked;
             } else if ($(this).is(":radio")) {
@@ -1749,6 +1966,8 @@ function createScriptSetting() {
               formData[this.name] = parseFloat(this.value);
             } else if ($(this).attr("type") === "date") {
               formData[this.name] = new Date(this.value);
+            } else if ($(this).is("select")) {
+              formData[this.name] = parseFloat(this.value);
             } else {
               formData[this.name] = this.value;
             }
@@ -1758,6 +1977,7 @@ function createScriptSetting() {
         for (const key of Object.keys(formData)) {
           cacheSetting[key] = formData[key];
         }
+        console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;", cacheSetting);
         try {
           localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(cacheSetting));
           notifyBox("保存成功");
@@ -1766,14 +1986,14 @@ function createScriptSetting() {
         }
         // 刷新页面以应用新设置
         setTimeout(() => {
-          window.location.reload();
+          // window.location.reload();
         }, 300);
       })
     );
     // 根据用户设置决定是否显示高级设置
-    if (getUserSetting("showMoreSetting")) {
-      $(".setting-div .more-setting").show();
-    }
+    if (getUserSetting("showMoreSetting")) $(".setting-div .more-setting").show();
+    // 根据用户设置决定是否显示水墨图床 token 设置
+    if (getUserSetting("imgUploadSelOpt") != 2) $(".setting-div .sel-suimo").hide();
   }
   // 设置 icon
   function createIcon() {
@@ -1863,6 +2083,75 @@ function checkLocation() {
 
 /* ================================================== 自定义方法开始 ================================================== */
 
+// 解析各大视频平台url
+function getVideoPlayUrl(url) {
+  return new Promise((resolve, reject) => {
+    if (url.includes("douyin")) {
+      resolve(dy());
+    } else if (url.includes("kuaishou")) {
+    } else if (url.includes("bilibili")) {
+    } else {
+      reject();
+    }
+  });
+  function dy() {
+    const dyData = myAjax(url, { url }, "post", { headers: { "Access-Control-Allow-Origin": "*" } });
+    console.log("%c ===> [ dyData ] <===", "font-size:13px; background:pink; color:#bf2c9f;", dyData);
+  }
+}
+
+// 生成输入内容域
+function showInputPopup(inputTitle, callback) {
+  // 创建蒙版
+  const mask = $('<div class="input-popup-mask"></div>');
+  mask.click(function (event) {
+    if (event.target === mask[0]) {
+      mask.remove();
+      callback(null);
+    }
+  });
+  // 创建弹出框
+  const popup = $('<div class="input-popup"></div>');
+  // 创建输入框
+  for (let i = 0; i < inputTitle.length; i++) {
+    const inputBox = $(
+      '<div class="input-popup-input"><label class="input-popup-label">' +
+        inputTitle[i] +
+        '：</label><textarea class="input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
+    );
+    popup.append(inputBox);
+  }
+  // 创建按钮容器
+  const buttonsContainer = $('<div class="input-popup-buttons"></div>');
+  // 创建取消按钮
+  const cancelBtn = $('<button class="input-popup-cancel-btn">取消</button>');
+  cancelBtn.click(function () {
+    mask.remove();
+    callback(null);
+  });
+  // 创建确定按钮
+  const submitBtn = $('<button class="input-popup-submit-btn">确定</button>');
+  submitBtn.click(function () {
+    const inputs = $(".input-popup-textarea");
+    const inputValues = [];
+    inputs.each(function () {
+      inputValues.push($(this).val());
+    });
+    mask.remove();
+    callback(inputValues);
+  });
+  // 将按钮添加到按钮容器
+  buttonsContainer.append(cancelBtn);
+  buttonsContainer.append(submitBtn);
+  // 将按钮容器添加到弹出框
+  popup.append(buttonsContainer);
+  // 将弹出框添加到蒙版
+  mask.append(popup);
+
+  // 将蒙版添加到页面
+  $("body").append(mask);
+}
+
 // 判断是否为pc端浏览器打开
 function isPC() {
   let userAgentInfo = navigator.userAgent;
@@ -1876,6 +2165,7 @@ function isPC() {
   }
   return isPC;
 }
+
 // 滚动页面到指定标签，并显示在屏幕中间
 function scrollToEle(toEle, animateTime = 500) {
   const targetElement = $(toEle); // 使用适当的选择器选择目标元素
@@ -1892,7 +2182,7 @@ function scrollToEle(toEle, animateTime = 500) {
 }
 
 // Ajax 请求
-function myAjax(url, data, method, options) {
+function myAjax(url, data, method = "Get", options) {
   return new Promise((resolve, reject) => {
     $.ajax({
       url,
@@ -1908,6 +2198,7 @@ function myAjax(url, data, method, options) {
     });
   });
 }
+
 // 生成指定长度随机字符串
 function generateRandomString(length) {
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -1957,6 +2248,7 @@ function addCustomStyle() {
   // console.log("%c ===> [ 添加自定义样式 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
   $("<style>").text(customCSS).appendTo("head");
 }
+
 /**
  * 防抖
  * @param {*} func
