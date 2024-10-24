@@ -37,7 +37,8 @@ const defaultSetting = {
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
   openLayerForBook: false, // pc 端帖子在弹窗中打开
 
-  imgUploadSelOpt: 1, // 使用图床
+  imgUploadSelOpt: 0, // 使用图床
+  imgUploadApiUrl: ["https://aapi.helioho.st/upload.php", "https://img.ink/api/upload"],
   suimoToken: "", // 水墨图床 token
 
   showMoreSetting: false, // 高级设置
@@ -731,8 +732,8 @@ const betterUbbList = {
     // { name: "短链生成" },
     {
       name: "图片",
+      ubb: (inputValues) => `[img]${inputValues[0]}[/img]`,
       upload: {
-        apiUrl: "",
         type: "img",
         accept: "image/*",
       },
@@ -741,31 +742,29 @@ const betterUbbList = {
       name: "视频",
       inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
       ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-      // upload: {
-      //   apiUrl: "",
-      //   type: "movie",
-      //   accept: "video/*",
-      // },
+      upload: {
+        type: "movie",
+        accept: "video/*",
+      },
     },
     {
       name: "音频",
       inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
       ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-      // upload: {
-      //   apiUrl: "",
-      //   type: "audio",
-      //   accept: "audio/*",
-      // },
+      upload: {
+        type: "audio",
+        accept: "audio/*",
+      },
     },
-    {
-      name: "抖音解析",
-      inputTitle: ["链接(不需要去除中文和多余字符)"],
-      apiUrl: "https://v.695402.xyz/dyzl",
-      ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-    },
-    { name: "快手解析", inputTitle: ["链接(不需要去除中文和多余字符)"], apiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
-    { name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], apiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
-    { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], apiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+    // {
+    //   name: "抖音解析",
+    //   inputTitle: ["链接(不需要去除中文和多余字符)"],
+    //   apiUrl: "https://v.695402.xyz/dyzl",
+    //   ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    // },
+    // { name: "快手解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+    // { name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+    // { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
     // { name: "屋舍文件" },
   ],
   audio: [
@@ -986,7 +985,7 @@ function huifuAddUbb() {
   createToggleEle();
   createUbbListEle();
 
-  !getUserSetting("showHuifuUbb") && $(".ubb-list-div").hide();
+  !getUserSetting("showHuifuUbb") && $(".huifu-ubb-list-div").hide();
 
   function createUbbListEle() {
     const ubbDivEle = `
@@ -1002,6 +1001,7 @@ function huifuAddUbb() {
     $(".viewContent .sticky").after(ubbDivEle);
     createDefaultUbb();
     createBetterUbb();
+    createAudiotUbb();
   }
   function createToggleEle() {
     const toggleEle = $(`<span class="custom-toggle-btn">${getUserSetting("showHuifuUbb") ? "折叠 UBB" : "展开 UBB"}</span>`);
@@ -1009,47 +1009,132 @@ function huifuAddUbb() {
       const showHuifuUbb = getUserSetting("showHuifuUbb");
       if (showHuifuUbb) {
         saveUserSetting("showHuifuUbb", false);
-        $(".ubb-list-div").hide();
+        $(".huifu-ubb-list-div").hide();
         $(this).text("展开 UBB");
       } else {
         saveUserSetting("showHuifuUbb", true);
-        $(".ubb-list-div").show();
+        $(".huifu-ubb-list-div").show();
         $(this).text("折叠 UBB");
       }
     });
     $(".viewContent .kuaisuhuifu").append(toggleEle);
   }
+  // 音频外链 ubb
+  function createAudiotUbb() {
+    const audioUbbListHtml = [];
+    const audioUbbBox = $(".huifu-ubb-list-div .audio-ubb").next();
+    betterUbbList.audio.forEach((ubbItem) => {
+      const { name, ubb } = ubbItem;
+      const span = $(`<span class="ubb-item">${name}</span>`);
+      $(span).click(() => insetCustomContent(ubb, ".centered-container .retextarea", true));
+      audioUbbListHtml.push(span);
+    });
+    audioUbbBox.append(audioUbbListHtml);
+  }
   // 增强 ubb
   function createBetterUbb() {
     const betterUbbListHtml = [];
+    const betterUbbBox = $(".huifu-ubb-list-div .better-ubb").next();
     betterUbbList.txt.forEach((ubbItem) => {
-      const { name, inputTitle, ubb, upload, apiUrl } = ubbItem;
-      const span = $(`<span class="ubb-item">${name}</span>`);
-      $(span).click(() => {
-        if (inputTitle && inputTitle.length > 0 && !apiUrl) {
+      const { name, upload } = ubbItem;
+      let ubbSpanEle = null;
+      if (upload?.type?.length > 0) {
+        ubbSpanEle = $(`
+            <input type="file" id="upload-${upload.type}" style="display: none;" accept="${upload.accept}" multiple/>
+            <span class="ubb-item">${name}</span>
+        `);
+      } else {
+        ubbSpanEle = $(`<span class="ubb-item">${name}</span>`);
+      }
+      betterUbbListHtml.push(ubbSpanEle);
+    });
+    betterUbbBox.append(betterUbbListHtml);
+    // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
+    betterUbbList.txt.forEach((ubbItem) => {
+      const { name, inputTitle, ubb, upload, jxApiUrl } = ubbItem;
+      betterUbbBox.find(`.ubb-item:contains("${name}")`).click(() => {
+        if (inputTitle?.length > 0 && !jxApiUrl) {
+          // 输入域
           showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubb(inputResult), ".centered-container .retextarea", true));
-        } else if (apiUrl && apiUrl.length > 0) {
+        } else if (inputTitle?.length > 0 && jxApiUrl?.length > 0) {
+          // 外链解析
           showInputPopup(inputTitle, async (inputResult) => {
             const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
             await getVideoPlayUrl(targetUrl[0]);
           });
         } else if (upload) {
+          // 上传文件
+          betterUbbBox.find(`#upload-${upload.type}`).click();
+          // 文件选择回调事件
+          betterUbbBox.find(`#upload-${upload.type}`).change(function () {
+            const tempFiles = this.files;
+            if (tempFiles.length > 0) {
+              if (tempFiles.length > 10) {
+                notifyBox("一次最多选择 10 个文件", false);
+                return;
+              }
+              // 上传等待提示
+              showWaitBox("上传中…");
+              const uploadResults = []; // 存储上传结果的数组
+              for (const file of tempFiles) {
+                try {
+                  switch (upload.type) {
+                    case "img":
+                      const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
+                      const options = {};
+                      if (getUserSetting("imgUploadSelOpt") == 1) {
+                        // 水墨图床添加 token
+                        options.headers = { token: getUserSetting("suimoToken") };
+                      }
+                      const data = new FormData();
+                      data.append("image", file);
+                      uploadFiles(url, data, options, (response) => {
+                        const { code, msg, data } = response;
+                        if (code == 200) {
+                          uploadResults.push(data.url);
+                          insetCustomContent(ubb([data.url]), ".centered-container .retextarea", true);
+                        } else {
+                          // notifyBox(msg, false);
+                        }
+                      });
+                      break;
+                    case "movie":
+                      break;
+                    case "audio":
+                      break;
+                    default:
+                      break;
+                  }
+                } catch (error) {
+                  // notifyBox(`文件 ${file.name} 上传失败`, false);
+                  console.error(error);
+                }
+              }
+              // 关闭等待提示
+              $(".wait-box-overlay").remove();
+              if (uploadResults.length > 0) {
+                setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件，失败 ${tempFiles} 个文件`), 300);
+              }
+              // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
+            } else {
+              notifyBox("请选择文件", false);
+            }
+          });
         }
       });
-      betterUbbListHtml.push(span);
     });
-    $(".better-ubb + .huifu-ubb-box").append(betterUbbListHtml);
   }
   // 默认 ubb
   function createDefaultUbb() {
     const defaultUbbListHtml = [];
+    const defaultUbbBox = $(".huifu-ubb-list-div .default-ubb").next();
     defaultUbbList.forEach((ubbItem) => {
       const { name, ubb } = ubbItem;
       const span = $(`<span class="ubb-item">${name}</span>`);
       $(span).click(() => insetCustomContent(ubb, ".centered-container .retextarea", true));
       defaultUbbListHtml.push(span);
     });
-    $(".default-ubb + .huifu-ubb-box").append(defaultUbbListHtml);
+    defaultUbbBox.append(defaultUbbListHtml);
   }
 }
 // 发帖 ubb 增强
@@ -1098,60 +1183,73 @@ function bookViewAddUbb() {
     }
 
     // 生成 ubb 按钮
-    const ubbListHtml = [];
-    defaultUbbList.forEach((ubbItem) => {
-      const { name, needUpload, uploadFileType, accept } = ubbItem;
-      let ubbEle = "";
-      if (needUpload) {
-        ubbEle = $(`
-            <input type="file" id="upload-${uploadFileType}" style="display: none;" accept="${accept}" multiple/>
+    const betterUbbListHtml = [];
+    betterUbbList.txt.forEach((ubbItem) => {
+      const { name, upload } = ubbItem;
+      let ubbSpanEle = null;
+      if (upload?.type?.length > 0) {
+        ubbSpanEle = $(`
+            <input type="file" id="upload-${upload.type}" style="display: none;" accept="${upload.accept}" multiple/>
             <span class="ubb-item">${name}</span>
         `);
       } else {
-        ubbEle = $(`<span class="ubb-item">${name}</span>`);
+        ubbSpanEle = $(`<span class="ubb-item">${name}</span>`);
       }
-      ubbListHtml.push(ubbEle);
+      betterUbbListHtml.push(ubbSpanEle);
     });
-    $(".ubb-list-div").append(ubbListHtml);
-    // 设置 ubb 点击功能
-    defaultUbbList.forEach((ubbItem) => {
-      const { name, ubb, needUpload, uploadFileType } = ubbItem;
-      if (needUpload) {
-        // 文件选择
-        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => {
-          if (getUserSetting("suimoToken").length < 5) {
-            insetCustomContent(ubb, ".content [name='book_content']", true);
-          } else {
-            $(`#upload-${uploadFileType}`).click();
-          }
-        });
-        // 文件选择回调事件
-        $(`#upload-${uploadFileType}`).change(function () {
-          const files = this.files;
-          if (files.length > 0) {
-            if (files.length > 10) {
-              notifyBox("一次最多选择 10 个文件", false);
-              return;
-            }
-            // 上传等待提示
-            showWaitBox("上传中…");
-            const uploadResults = []; // 存储上传结果的数组
-            (async function () {
-              for (const file of files) {
+    $(".ubb-list-div").append(betterUbbListHtml);
+    // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
+    betterUbbList.txt.forEach((ubbItem) => {
+      const { name, inputTitle, ubb, upload, jxApiUrl } = ubbItem;
+      $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => {
+        if (inputTitle?.length > 0 && !jxApiUrl) {
+          // 输入域
+          showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubb(inputResult), ".content [name='book_content']", true));
+        } else if (inputTitle?.length > 0 && jxApiUrl?.length > 0) {
+          // 外链解析
+          showInputPopup(inputTitle, async (inputResult) => {
+            const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
+            await getVideoPlayUrl(targetUrl[0]);
+          });
+        } else if (upload) {
+          // 上传文件
+          $(`.ubb-list-div #upload-${upload.type}`).click();
+          // 文件选择回调事件
+          $(`.ubb-list-div #upload-${upload.type}`).change(function () {
+            const tempFiles = this.files;
+            if (tempFiles.length > 0) {
+              if (tempFiles.length > 10) {
+                notifyBox("一次最多选择 10 个文件", false);
+                return;
+              }
+              // 上传等待提示
+              showWaitBox("上传中…");
+              const uploadResults = []; // 存储上传结果的数组
+              for (const file of tempFiles) {
                 try {
-                  switch (uploadFileType) {
+                  switch (upload.type) {
                     case "img":
-                      const fileUrl = await uploadFile(file, "https://img.ink/api/upload", {
-                        token: getUserSetting("suimoToken"),
+                      const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
+                      const options = {};
+                      if (getUserSetting("imgUploadSelOpt") == 1) {
+                        // 水墨图床添加 token
+                        options.headers = { token: getUserSetting("suimoToken") };
+                      }
+                      const data = new FormData();
+                      data.append("image", file);
+                      uploadFiles(url, data, options, (response) => {
+                        const { code, msg, data } = response;
+                        if (code == 200) {
+                          uploadResults.push(data.url);
+                          insetCustomContent(ubb([data.url]), ".content [name='book_content']", true);
+                        } else {
+                          // notifyBox(msg, false);
+                        }
                       });
-                      uploadResults.push(fileUrl);
-                      insetCustomContent(`[img]${fileUrl}[/img]`, ".content [name='book_content']", true);
                       break;
                     case "movie":
-                      insetCustomContent(`[movie]${fileUrl}[/movie]`, ".content [name='book_content']", true);
                       break;
                     case "audio":
-                      insetCustomContent(`[audio]${fileUrl}[/audio]`, ".content [name='book_content']", true);
                       break;
                     default:
                       break;
@@ -1164,49 +1262,18 @@ function bookViewAddUbb() {
               // 关闭等待提示
               $(".wait-box-overlay").remove();
               if (uploadResults.length > 0) {
-                setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件`), 300);
+                setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件，失败 ${tempFiles} 个文件`), 300);
               }
               // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
-            })();
-          } else {
-            notifyBox("请选择文件", false);
-          }
-        });
-      } else {
-        // 默认 ubb
-        $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => {
-          insetCustomContent(ubb, ".content [name='book_content']", true);
-        });
-      }
-    });
-    function uploadFile(file, apiUrl, headers) {
-      return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append("image", file);
-
-        $.ajax({
-          url: apiUrl,
-          type: "POST",
-          data: formData,
-          contentType: false,
-          processData: false,
-          headers,
-          success: (response) => {
-            const { code, msg, data } = response;
-            if (code === 200) {
-              resolve(data.url);
             } else {
-              notifyBox(msg, false);
-              reject();
+              notifyBox("请选择文件", false);
             }
-          },
-          error: (error) => {
-            console.error("未知错误，上传失败", error);
-          },
-        });
+          });
+        }
       });
-    }
+    });
   }
+  // 按钮
   function createToggleEle() {
     const toggleEle = $(
       `<span class="custom-toggle-btn ubb-btn" style="font-size:10px;margin-right:0;">${
@@ -1768,8 +1835,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>图床选择</span>
             <select name='imgUploadSelOpt' class="reset" style="font-size: 12px;width:116px;padding-left:8px;height:25px;">
-              <option value="1" ${getUserSetting("imgUploadSelOpt") == 1 ? "selected" : ""}>美团</option>
-              <option value="2" ${getUserSetting("imgUploadSelOpt") == 2 ? "selected" : ""}>水墨</option>
+              <option value="0" ${getUserSetting("imgUploadSelOpt") == 0 ? "selected" : ""}>美团</option>
+              <option value="1" ${getUserSetting("imgUploadSelOpt") == 1 ? "selected" : ""}>水墨</option>
             </select>
           </li>
           <li class="setting-li-between sel-suimo">
@@ -1778,7 +1845,6 @@ function createScriptSetting() {
               "suimoToken"
             )}" name="suimoToken" id="suimoToken"  type="password" placeholder="为空则为不上传…"/>
           </li>
-          <li class="setting-li-tips sel-suimo"}>用于发帖/回帖图片自动上传回显</li>
           <li class="setting-li-between">
             <span>我要用右手</span>
             <div class="switch">
@@ -1899,10 +1965,8 @@ function createScriptSetting() {
         const selectedValue = $(this).val();
 
         if (selectName === "imgUploadSelOpt") {
-          if (selectedValue == 1) $(".setting-div .sel-suimo").hide();
-          else if (selectedValue == 2) $(".setting-div .sel-suimo").show();
-        } else {
-          // 执行操作
+          if (selectedValue == 0) $(".setting-div .sel-suimo").hide();
+          else if (selectedValue == 1) $(".setting-div .sel-suimo").show();
         }
       });
     // 禁止蒙版下的body内容滚动
@@ -1986,14 +2050,14 @@ function createScriptSetting() {
         }
         // 刷新页面以应用新设置
         setTimeout(() => {
-          // window.location.reload();
+          window.location.reload();
         }, 300);
       })
     );
     // 根据用户设置决定是否显示高级设置
     if (getUserSetting("showMoreSetting")) $(".setting-div .more-setting").show();
     // 根据用户设置决定是否显示水墨图床 token 设置
-    if (getUserSetting("imgUploadSelOpt") != 2) $(".setting-div .sel-suimo").hide();
+    if (getUserSetting("imgUploadSelOpt") != 1) $(".setting-div .sel-suimo").hide();
   }
   // 设置 icon
   function createIcon() {
@@ -2098,6 +2162,32 @@ function getVideoPlayUrl(url) {
     const dyData = myAjax(url, { url }, "post", { headers: { "Access-Control-Allow-Origin": "*" } });
     console.log("%c ===> [ dyData ] <===", "font-size:13px; background:pink; color:#bf2c9f;", dyData);
   }
+}
+
+/**
+ * 上传文件到指定api
+ * @param {*} url api地址
+ * @param {*} data 数据
+ * @param {*} options 附加请求数据
+ * @param {*} callback 回调函数
+ * @param {*} type 请求方法
+ */
+function uploadFiles(url, data, options = {}, callback, type = "POST") {
+  $.ajax({
+    url,
+    type,
+    data,
+    contentType: false,
+    processData: false,
+    dataType: "json", // 期望返回的数据格式
+    ...options,
+    success: (response) => {
+      callback(response);
+    },
+    error: (error) => {
+      console.error("未知错误，上传失败", error);
+    },
+  });
 }
 
 // 生成输入内容域
