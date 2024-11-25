@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.3.1
+// @version         1.4.1
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -27,11 +27,13 @@ const defaultSetting = {
   settingIconSize: 50, // 设置 logo 大小
   showTopAndDownBtn: true, // 显示一键回到顶部/底部
   hideXunzhang: true, // 隐藏勋章
-  showBookViewUbb: false, // 发帖 ubb 展开
-  showBookViewFace: false, // 发帖表情展开
-  showHuifuUbb: false, // 回帖 ubb 展开
+
+  showBookViewUbb: true, // 发帖 ubb 展开
+  showBookViewEmoji: true, // 发帖表情展开
+  showHuifuUbb: true, // 回帖 ubb 展开
+  showHuifuEmoji: true, // 回帖表情展开
+
   imgThumbWidth: 100, // 图片缩小后显示宽度
-  showFaceList: true, // 回帖表情展开
   useRight: false, // 下一页显示在右边
   autoLoadMoreBookList: false, // 帖子列表自动加载更多
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
@@ -204,7 +206,7 @@ const customCSS = `
     border-radius: 5px;
   }
   /* 表情增强 样式 */
-  .facelist-div{
+  .emojilist-div{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
     grid-gap: 2px;
@@ -212,26 +214,30 @@ const customCSS = `
     justify-content: space-between;
     flex-wrap: wrap;*/
     padding: 5px;
-    margin: 0 5px 10px;
+    margin-bottom:5px;
     font-size: 12px;
     border: 1px solid #eee;
     border-radius: 5px;
   }
-  .facelist-img{
+  .emojilist-img{
     width:40px;
     height:40px;
   }
+  .huifu-emoji{
+    margin:0 1% 5px;
+    border-color:#d4d4d4;
+  }
   /* ubb 增强 样式 */
-  .ubb-list-div{
+  .ubblist-div{
     display:flex;
     flex-wrap: wrap;
     gap: 4px 4px;
     justify-content: space-between;
-    margin: 0 1%;
+    margin-bottom:5px;
     padding:5px;
     font-size:12px;
-    border: 1px solid #d4d4d4;
-    border-radius: 8px;
+    border: 1px solid #eee;
+    border-radius: 5px;
   }
   .ubb-item{
     height:25px;
@@ -243,6 +249,10 @@ const customCSS = `
     color: #333;
     text-decoration: none;
     border-radius:30px;
+  }
+  .huifu-ubb{
+    margin:0 1% 5px;
+    border-color:#d4d4d4;
   }
 
   .clear-setting{
@@ -807,6 +817,380 @@ const betterUbbList = {
   ],
   video: [],
 };
+// 表情
+const emojiList = [
+  // 论坛自带表情
+  { name: "踩", url: "face/踩.gif" },
+  { name: "狂踩", url: "face/狂踩.gif" },
+  { name: "淡定", url: "face/淡定.gif" },
+  { name: "囧", url: "face/囧.gif" },
+  { name: "不要", url: "face/不要.gif" },
+  { name: "重拳出击", url: "face/重拳出击.gif" },
+  { name: "砳砳", url: "face/砳砳.gif" },
+  { name: "滑稽砳砳", url: "face/滑稽砳砳.gif" },
+  { name: "沙发", url: "face/沙发.gif" },
+  { name: "汗", url: "face/汗.gif" },
+  { name: "亲亲", url: "face/亲亲.gif" },
+  { name: "太开心", url: "face/太开心.gif" },
+  { name: "酷", url: "face/酷.gif" },
+  { name: "思考", url: "face/思考.gif" },
+  { name: "发呆", url: "face/发呆.gif" },
+  { name: "得瑟", url: "face/得瑟.gif" },
+  { name: "哈哈", url: "face/哈哈.gif" },
+  { name: "泪流满面", url: "face/泪流满面.gif" },
+  { name: "放电", url: "face/放电.gif" },
+  { name: "困", url: "face/困.gif" },
+  { name: "超人", url: "face/超人.gif" },
+  { name: "害羞", url: "face/害羞.gif" },
+  { name: "呃", url: "face/呃.gif" },
+  { name: "哇哦", url: "face/哇哦.gif" },
+  { name: "要死了", url: "face/要死了.gif" },
+  { name: "谢谢", url: "face/谢谢.gif" },
+  { name: "抓狂", url: "face/抓狂.gif" },
+  { name: "无奈", url: "face/无奈.gif" },
+  { name: "不好笑", url: "face/不好笑.gif" },
+  { name: "呦呵", url: "face/呦呵.gif" },
+  { name: "感动", url: "face/感动.gif" },
+  { name: "喜欢", url: "face/喜欢.gif" },
+  { name: "疑问", url: "face/疑问.gif" },
+  { name: "委屈", url: "face/委屈.gif" },
+  { name: "你不行", url: "face/你不行.gif" },
+  { name: "流口水", url: "face/流口水.gif" },
+  { name: "潜水", url: "face/潜水.gif" },
+  { name: "咒骂", url: "face/咒骂.gif" },
+  { name: "耶耶", url: "face/耶耶.gif" },
+  { name: "被揍", url: "face/被揍.gif" },
+  { name: "抱走", url: "face/抱走.gif" },
+  // 自定义表情
+  {
+    url: "http://static2.51gonggui.com/FhBfMfl4sGC3QJVTMaLqEKkE90Ia#.gif",
+    name: "摸鱼",
+  },
+  {
+    url: "http://static2.51gonggui.com/FmNyrjU8Wq0m3PiwHQJwDhHdv-EJ#.gif",
+    name: "稽舞",
+  },
+  {
+    url: "http://static2.51gonggui.com/FoKvdu89eiq0q-24IfOM2mFB0vIq#.gif",
+    name: "色稽",
+  },
+  {
+    url: "http://static2.51gonggui.com/FrZ6GDJiOAz3pp4e5_8uSShSXXXk#.gif",
+    name: "撒娇",
+  },
+  {
+    url: "http://static2.51gonggui.com/FiZiSSyXSa8eCzwOXmIfOOpfA_7a#.gif",
+    name: "稽狗",
+  },
+  {
+    url: "http://static2.51gonggui.com/FqNDzswUNJ-AsSHXyxXB4Qm1X0y-#.gif",
+    name: "没钱",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fsq-HyBc5lP6vZY_qeWofOM9mRVH#.gif",
+    name: "骚舞",
+  },
+  {
+    url: "http://static2.51gonggui.com/FhCk4emkrO9f8ICFxKlm8wBcTOgT#.gif",
+    name: "吃屎",
+  },
+  {
+    url: "http://static2.51gonggui.com/FkEHwSlEfQ7bWya6-wg366Xy91qW#.gif",
+    name: "鄙视",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fi2hY7M9DPgD9s0aCWemwk2iYUDW#.gif",
+    name: "听歌",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fhry6EpdUBqFCt3OOyQTkLZMZGFR#.gif",
+    name: "伸头",
+  },
+  {
+    url: "http://static2.51gonggui.com/FhgYnWJ-apnyjSXOpInJhLbfUQFY#.gif",
+    name: "鼓掌",
+  },
+  {
+    url: "http://static2.51gonggui.com/FvSxOEIhyA7ID1J8emIME7tBT7Io#.gif",
+    name: "踢腿",
+  },
+  {
+    url: "http://static2.51gonggui.com/FunDHky9UKkB-4zj-bfSb82u81Xg#.gif",
+    name: "男同",
+  },
+  {
+    url: "http://static2.51gonggui.com/FgXUeACmKWWMDT9hrpVAnQp4dCqF#.gif",
+    name: "手枪",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fg_qtra3abNozPxaoEMVKO7VIsuX#.gif",
+    name: "拍头",
+  },
+  {
+    url: "http://static2.51gonggui.com/FnNg1vOiuOlSe7WFWRyNZfO_4H3U#.gif",
+    name: "躺平",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fj7WAkv87tpL1I26WQgSaXlsyYBL#.gif",
+    name: "追稽",
+  },
+  {
+    url: "http://static2.51gonggui.com/FgwFBazeUavJcw-SL7FS6wUkcUTk#.gif",
+    name: "司稽",
+  },
+  {
+    url: "http://static2.51gonggui.com/FjXNVx-MUgAVq62aNqekSPOUjDAC#.gif",
+    name: "乞讨",
+  },
+  {
+    url: "http://static2.51gonggui.com/FjudMlJdd8dLXuGjyASN7JldAxqe#.gif",
+    name: "跪稽",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fm8DQQwyYthk8Q97ZLScgCDXsv4_#.gif",
+    name: "刀你",
+  },
+  {
+    url: "http://static2.51gonggui.com/FqTaBgs1l8bqeDYBxcWzxF4Wgt6_#.gif",
+    name: "冲刺",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fmw152FIzN1gpFrbCKlp7cmqlCxc#.gif",
+    name: "转圈",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fmf5aWS5yqycKebxTno7un53h9HW#.gif",
+    name: "吃稽",
+  },
+  {
+    url: "http://static2.51gonggui.com/FhUkLD2khZ7hn1uzArWkT47Pd9jq#.gif",
+    name: "犯贱",
+  },
+  {
+    url: "http://static2.51gonggui.com/FihrjZwpB1jMdOF9QvtQG3J32z4q#.gif",
+    name: "牛掰",
+  },
+  {
+    url: "http://static2.51gonggui.com/FlX6e1Ip6Z8gvl7lkimmCifwBhFt#.gif",
+    name: "拥抱",
+  },
+  {
+    url: "http://static2.51gonggui.com/FoIs-hNK7fhW8jwxEgDLRxARFcve#.gif",
+    name: "拍头",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fgx4XlxG9461Y_TJsg0hGxPTylYi#.gif",
+    name: "摇头",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fvrng91QU_PKY9Uwat77VTVouj5k#.gif",
+    name: "挠头",
+  },
+  {
+    url: "http://static2.51gonggui.com/FkyiMRaJI1BfuA6T3w4Z9mJh1qbg#.gif",
+    name: "上学",
+  },
+  {
+    url: "http://static2.51gonggui.com/FpZEifxiFGs1BWtHjFsk5tJJNKSE#.gif",
+    name: "流汗",
+  },
+  {
+    url: "http://static2.51gonggui.com/FiBZZ6mBTB5R5bu5lGkybboOwLwm#.gif",
+    name: "摩擦",
+  },
+  {
+    url: "http://static2.51gonggui.com/FmMtly844_wS6LfLLtLSwgzcXSqg#.gif",
+    name: "喝饮料",
+  },
+  {
+    url: "http://static2.51gonggui.com/FqyckEvAxFVyD1SmA9m2jInv_Crb#.gif",
+    name: "猛狗",
+  },
+  {
+    url: "http://static2.51gonggui.com/FmfsKjv4ymuWR80UGY-sea-I_Ey5#.gif",
+    name: "妲己",
+  },
+  {
+    url: "http://static2.51gonggui.com/FkEmzRCL3eJGlgkHHnHTy94sXwE1#.gif",
+    name: "街舞",
+  },
+  {
+    url: "http://static2.51gonggui.com/FgiAIOkFg8qG3UZKQx24ImVDrDRj#.gif",
+    name: "功德",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fl2Zonx2Y8z-xZrSQnGBWzsnRKC9#.gif",
+    name: "晃饮料",
+  },
+  {
+    url: "http://static2.51gonggui.com/FvMXbnIX8RavSBAhflxf1zomD1ov#.gif",
+    name: "扇子",
+  },
+  {
+    url: "http://static2.51gonggui.com/FmD3h-QCVdJ-ehjLh8_G-nQzynuv#.gif",
+    name: "膜拜",
+  },
+  {
+    url: "http://static2.51gonggui.com/FoGXe8yRSIomTZFM78TZVyP-kwlz#.gif",
+    name: "醒醒",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fim_ZRiJugrWJkDtq4SlqbOziuZ3#.gif",
+    name: "巴掌",
+  },
+  {
+    url: "http://static2.51gonggui.com/FpVLTimqXFvRJB9PxWDKMherZoRi#.gif",
+    name: "鼓掌",
+  },
+  {
+    url: "http://static2.51gonggui.com/Fit100hjJ-T5RwQxeNdoVWplvNvU#.gif",
+    name: "该死",
+  },
+  {
+    url: "http://static2.51gonggui.com/FkeVK5icB5-Pc7mbZitDTX1AqfNO#.gif",
+    name: "红酒",
+  },
+  {
+    url: "http://static2.51gonggui.com/FnjJRSH3_CLjYyyQzVjD8mtY-PdB#.gif",
+    name: "开心",
+  },
+  {
+    url: "http://static2.51gonggui.com/Foqd_tGWrk-ARnNrt-XraMCDzhUS#.gif",
+    name: "紧张",
+  },
+  {
+    url: "http://static2.51gonggui.com/FsCE3iHM0REN077WKr0bssyKiR7Z#.gif",
+    name: "伤心2",
+  },
+  {
+    url: "https://p6.itc.cn/q_70/images03/20210723/3b9017a6580644e4af8b43d73b92c0a9.gif",
+    name: "看戏",
+  },
+  {
+    url: "https://p0.itc.cn/q_70/images03/20210723/4874b66b12f04be1aab989d289e8635a.gif",
+    name: "顶你",
+  },
+  {
+    url: "https://pic2.ziyuan.wang/user/guest/2024/04/kwyjjlck_81f49e01db86c.gif",
+    name: "哭死",
+  },
+  {
+    url: "https://p2.itc.cn/q_70/images03/20210723/f9c4a2e9879f438c9f151366442f311e.gif",
+    name: "看不见",
+  },
+  {
+    url: "https://p8.itc.cn/q_70/images03/20210723/189ca0ed210142999a1661d2bd3cf852.gif",
+    name: "蹲坑",
+  },
+  {
+    url: "https://pic2.zhimg.com/v2-568bb2311e00c3ecbc4dd49ab0709f09_b.gif",
+    name: "磨刀",
+  },
+  {
+    url: "https://pic.ziyuan.wang/user/sub/2024/04/458ed8da862d4a71bc5ab4c2435711fd_088c2fc6f5680.png",
+    name: "小丑",
+  },
+  {
+    url: "https://i.piantu.cn/2024/04/14/839386c85e1803d082b11cfe2fe5c33f.gif",
+    name: "有鬼",
+  },
+];
+// ubb
+const ubbList = [
+  {
+    name: "超链接",
+    inputTitle: ["网址", "文字说明"],
+    ubb: (inputValues) => `[url=${inputValues[0]}]${inputValues[1]}[/url]`,
+  },
+  {
+    name: "红字",
+    inputTitle: ["文本内容"],
+    ubb: (inputValues) => `[forecolor=red]${inputValues[0]}[/forecolor]`,
+  },
+  {
+    name: "加粗",
+    inputTitle: ["文本内容"],
+    ubb: (inputValues) => `[b]${inputValues[0]}[/b]`,
+  },
+  {
+    name: "斜体",
+    inputTitle: ["文本内容"],
+    ubb: (inputValues) => `[i]${inputValues[0]}[/i]`,
+  },
+  {
+    name: "下划线",
+    inputTitle: ["文本内容"],
+    ubb: (inputValues) => `[u]${inputValues[0]}[/u]`,
+  },
+  {
+    name: "删除线",
+    inputTitle: ["文本内容"],
+    ubb: (inputValues) => `[strike]${inputValues[0]}[/strike]`,
+  },
+  {
+    name: "代码",
+    inputTitle: ["代码内容"],
+    ubb: (inputValues) => `[code]${inputValues[0]}[/code]`,
+  },
+  { name: "拨号", inputTitle: ["手机号码"], ubb: (inputValues) => `[call]${inputValues[0]}[/call]` },
+  {
+    name: "发短信",
+    inputTitle: ["手机号码", "短信内容"],
+    ubb: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
+  },
+  {
+    name: "倒计时天数",
+    inputTitle: ["需要倒计时的日期(格式：2030-01-01)"],
+    ubb: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
+  },
+  {
+    name: "QQ音乐",
+    inputTitle: ["QQ音乐歌曲链接或ID"],
+    ubb: (inputValues) => `[qqmusic]${inputValues[0]}[/qqmusic]`,
+  },
+  {
+    name: "网易云音乐",
+    inputTitle: ["网易云音乐歌曲链接或ID"],
+    ubb: (inputValues) => `[wymusic]${inputValues[0]}[/wymusic]`,
+  },
+  // { name: "短链生成" },
+  {
+    name: "图片",
+    ubb: (inputValues) => `[img]${inputValues[0]}[/img]`,
+    upload: {
+      type: "img",
+      accept: "image/*",
+    },
+  },
+  {
+    name: "视频",
+    inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
+    ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    upload: {
+      type: "movie",
+      accept: "video/*",
+    },
+  },
+  {
+    name: "音频",
+    inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
+    ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    upload: {
+      type: "audio",
+      accept: "audio/*",
+    },
+  },
+  // {
+  //   name: "抖音解析",
+  //   inputTitle: ["链接(不需要去除中文和多余字符)"],
+  //   apiUrl: "https://v.695402.xyz/dyzl",
+  //   ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+  // },
+  // { name: "快手解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+  // { name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+  // { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubb: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+  // { name: "屋舍文件" },
+];
 
 const settingIconBase64 =
   "data:image/png;base64,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";
@@ -834,17 +1218,16 @@ const settingIconBase64 =
     userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^\/bbs-.*\.html$/, speedEatMoney, true);
     userSetting["hideXunzhang"] && executeFunctionForURL(/^\/bbs-.*\.html$/, hideXunzhang, true);
     userSetting["showHuifuCopy"] && executeFunctionForURL(/^\/bbs-.*\.html$/, huifuCopy, true);
-    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx$/, bookViewAddUbb, true);
-    executeFunctionForURL(/^\/bbs-.*\.html$/, huifuAddUbb, true);
-    executeFunctionForURL(/^\/bbs-.*\.html$/, loadEmoji, true);
+    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx$/, bookViewBetter, true);
+    executeFunctionForURL(/^\/bbs-.*\.html$/, huifuBetter, true);
+  });
+  // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
+  $(window).on("load", function () {
+    executeFunctionForURL(/^\/bbs-.*\.html$/, changeImgSize, true);
     userSetting["useRight"] && executeFunctionForURL("/bbs/book_list.aspx", useRightNextBtn);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
     userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/, autoLoadMoreHuifuList, true);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
-  });
-  // 页面加载完成后再执行代码，否则页面资源可能会获取不到，比如图片等
-  $(window).on("load", function () {
-    executeFunctionForURL(/^\/bbs-.*\.html$/, changeImgSize, true);
   });
 })();
 
@@ -954,13 +1337,13 @@ function autoLoadMoreBookList() {
     const windowHeight = $(this).height();
     const documentHeight = $(document).height();
     // 检查是否滚动到距离底部200px，并且还没有触发过点击事件
-    if (documentHeight - (scrollTop + windowHeight) <= 200 && !hasTriggered) {
+    if (documentHeight - (scrollTop + windowHeight) <= 500 && !hasTriggered) {
       // 自动点击加载更多按钮
       console.log("%c ===> [ 自动点击加载帖子 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
       loadMoreButton.click();
       // 设置标志位为已触发
       hasTriggered = true;
-    } else if (documentHeight - (scrollTop + windowHeight) > 200) {
+    } else if (documentHeight - (scrollTop + windowHeight) > 500) {
       // 如果滚动距离超过200px，重置标志位
       hasTriggered = false;
     }
@@ -978,322 +1361,100 @@ function useRightNextBtn() {
   prevLink.remove();
   nextLink.remove();
 }
-// 回帖 ubb 增强
-function huifuAddUbb() {
-  $(".kuaisuhuifu a").remove(); // 移除帖子快速回复旁“文件回帖”按钮
+// 回帖 增强
+function huifuBetter() {
+  // 移除帖子快速回复旁“文件回帖”按钮
+  $(".kuaisuhuifu a").remove();
+  // 移除默认表情展开按钮及弹出内容区域
+  $(".viewContent .ulselect").remove();
+  $(".viewContent .emoticon-popup").remove();
 
   createToggleEle();
-  createUbbListEle();
 
-  !getUserSetting("showHuifuUbb") && $(".huifu-ubb-list-div").hide();
+  $(".viewContent .centered-container").before('<div class="emojilist-div huifu-emoji"></div>');
+  createEmojiHtml(".viewContent .sticky [name='content']");
+  $(".viewContent .sticky").after('<div class="ubblist-div huifu-ubb"></div>');
+  createUbbHtml(".viewContent .sticky [name='content']");
 
-  function createUbbListEle() {
-    const ubbDivEle = `
-      <div class="huifu-ubb-list-div">
-        <span class="huifu-ubb-list-title default-ubb"><hr><b>默认</b><hr></span>
-        <span class="huifu-ubb-box"></span>
-        <span class="huifu-ubb-list-title better-ubb"><hr><b>增强</b><hr></span>
-        <span class="huifu-ubb-box"></span>
-        <span class="huifu-ubb-list-title audio-ubb"><hr><b>音频</b><hr></span>
-        <span class="huifu-ubb-box"></span>
-      </div>
-    `;
-    $(".viewContent .sticky").after(ubbDivEle);
-    createDefaultUbb();
-    createBetterUbb();
-    createAudiotUbb();
-  }
+  !getUserSetting("showHuifuEmoji") && $(".emojilist-div.huifu-emoji").hide();
+  !getUserSetting("showHuifuUbb") && $(".ubblist-div.huifu-ubb").hide();
+
   function createToggleEle() {
     const toggleEle = $(`<span class="custom-toggle-btn">${getUserSetting("showHuifuUbb") ? "折叠 UBB" : "展开 UBB"}</span>`);
     toggleEle.click(function () {
+      $(".ubblist-div").toggle();
       const showHuifuUbb = getUserSetting("showHuifuUbb");
       if (showHuifuUbb) {
         saveUserSetting("showHuifuUbb", false);
-        $(".huifu-ubb-list-div").hide();
         $(this).text("展开 UBB");
       } else {
         saveUserSetting("showHuifuUbb", true);
-        $(".huifu-ubb-list-div").show();
         $(this).text("折叠 UBB");
       }
     });
     $(".viewContent .kuaisuhuifu").append(toggleEle);
-  }
-  // 音频外链 ubb
-  function createAudiotUbb() {
-    const audioUbbListHtml = [];
-    const audioUbbBox = $(".huifu-ubb-list-div .audio-ubb").next();
-    betterUbbList.audio.forEach((ubbItem) => {
-      const { name, ubb } = ubbItem;
-      const span = $(`<span class="ubb-item">${name}</span>`);
-      $(span).click(() => insetCustomContent(ubb, ".centered-container .retextarea", true));
-      audioUbbListHtml.push(span);
+
+    const vSpan = $(`<span class='custom-toggle-btn'>${getUserSetting("showHuifuEmoji") ? "表情折叠" : "表情展开"}</span>`);
+    vSpan.css({
+      "margin-left": "10px",
+      "padding": "2px 10px",
     });
-    audioUbbBox.append(audioUbbListHtml);
-  }
-  // 增强 ubb
-  function createBetterUbb() {
-    const betterUbbListHtml = [];
-    const betterUbbBox = $(".huifu-ubb-list-div .better-ubb").next();
-    betterUbbList.txt.forEach((ubbItem) => {
-      const { name, upload } = ubbItem;
-      let ubbSpanEle = null;
-      if (upload?.type?.length > 0) {
-        ubbSpanEle = $(`
-            <input type="file" id="upload-${upload.type}" style="display: none;" accept="${upload.accept}" multiple/>
-            <span class="ubb-item">${name}</span>
-        `);
+    vSpan.insertBefore(".viewContent .tongzhi");
+    vSpan.click(function () {
+      $(".emojilist-div").toggle();
+      const showHuifuEmoji = getUserSetting("showHuifuEmoji");
+      if (showHuifuEmoji) {
+        saveUserSetting("showHuifuEmoji", false);
+        $(this).text("表情展开");
       } else {
-        ubbSpanEle = $(`<span class="ubb-item">${name}</span>`);
+        saveUserSetting("showHuifuEmoji", true);
+        $(this).text("表情折叠");
       }
-      betterUbbListHtml.push(ubbSpanEle);
     });
-    betterUbbBox.append(betterUbbListHtml);
-    // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
-    betterUbbList.txt.forEach((ubbItem) => {
-      const { name, inputTitle, ubb, upload, jxApiUrl } = ubbItem;
-      betterUbbBox.find(`.ubb-item:contains("${name}")`).click(() => {
-        if (inputTitle?.length > 0 && !jxApiUrl) {
-          // 输入域
-          showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubb(inputResult), ".centered-container .retextarea", true));
-        } else if (inputTitle?.length > 0 && jxApiUrl?.length > 0) {
-          // 外链解析
-          showInputPopup(inputTitle, async (inputResult) => {
-            const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
-            await getVideoPlayUrl(targetUrl[0]);
-          });
-        } else if (upload) {
-          // 上传文件
-          betterUbbBox.find(`#upload-${upload.type}`).click();
-          // 文件选择回调事件
-          betterUbbBox.find(`#upload-${upload.type}`).change(function () {
-            const tempFiles = this.files;
-            if (tempFiles.length > 0) {
-              if (tempFiles.length > 10) {
-                notifyBox("一次最多选择 10 个文件", false);
-                return;
-              }
-              // 上传等待提示
-              showWaitBox("上传中…");
-              const uploadResults = []; // 存储上传结果的数组
-              for (const file of tempFiles) {
-                try {
-                  switch (upload.type) {
-                    case "img":
-                      const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
-                      const options = {};
-                      if (getUserSetting("imgUploadSelOpt") == 1) {
-                        // 水墨图床添加 token
-                        options.headers = { token: getUserSetting("suimoToken") };
-                      }
-                      const data = new FormData();
-                      data.append("image", file);
-                      uploadFiles(url, data, options, (response) => {
-                        const { code, msg, data } = response;
-                        if (code == 200) {
-                          uploadResults.push(data.url);
-                          insetCustomContent(ubb([data.url]), ".centered-container .retextarea", true);
-                        } else {
-                          // notifyBox(msg, false);
-                        }
-                      });
-                      break;
-                    case "movie":
-                      break;
-                    case "audio":
-                      break;
-                    default:
-                      break;
-                  }
-                } catch (error) {
-                  // notifyBox(`文件 ${file.name} 上传失败`, false);
-                  console.error(error);
-                }
-              }
-              // 关闭等待提示
-              $(".wait-box-overlay").remove();
-              if (uploadResults.length > 0) {
-                setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件，失败 ${tempFiles} 个文件`), 300);
-              }
-              // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
-            } else {
-              notifyBox("请选择文件", false);
-            }
-          });
-        }
-      });
-    });
-  }
-  // 默认 ubb
-  function createDefaultUbb() {
-    const defaultUbbListHtml = [];
-    const defaultUbbBox = $(".huifu-ubb-list-div .default-ubb").next();
-    defaultUbbList.forEach((ubbItem) => {
-      const { name, ubb } = ubbItem;
-      const span = $(`<span class="ubb-item">${name}</span>`);
-      $(span).click(() => insetCustomContent(ubb, ".centered-container .retextarea", true));
-      defaultUbbListHtml.push(span);
-    });
-    defaultUbbBox.append(defaultUbbListHtml);
   }
 }
-// 发帖 ubb 增强
-function bookViewAddUbb() {
+// 发帖/修改贴 增强
+function bookViewBetter() {
   createToggleEle();
-  createUbbListEle();
-  createFaceListEle();
+
+  $(".upload-container .form-group .content-header").after('<div class="emojilist-div bookview-emoji"></div>');
+  createEmojiHtml(".upload-container .form-group [name='book_content']");
+  $(".upload-container .form-group .content-header").after('<div class="ubblist-div bookview-ubb"></div>');
+  createUbbHtml(".upload-container .form-group [name='book_content']");
 
   // 读取设置，当折叠时隐藏
-  !getUserSetting("showBookViewUbb") && $(".ubb-list-div").hide();
-  !getUserSetting("showBookViewFace") && $(".facelist-div.bookview-face").hide();
+  !getUserSetting("showBookViewEmoji") && $(".emojilist-div.bookview-emoji").hide();
+  !getUserSetting("showBookViewUbb") && $(".ubblist-div.bookview-ubb").hide();
 
-  // 表情
-  function createFaceListEle() {
-    if (window.location.pathname === "/bbs/book_view_mod.aspx") {
-      // 修改帖子
-      $(".content .centered-container").eq(1).before('<div class="facelist-div bookview-face"></div>');
-    } else {
-      // 发布帖子
-      $(".content .book_view_add_height").eq(1).after('<div class="facelist-div bookview-face"></div>');
-    }
-
-    const faceListHtml = [];
-    const faceList = [...defaultFaceList, ...diyFaceList];
-    faceList.forEach((faceitem) => {
-      const { name, url } = faceitem;
-      const img = $("<img/>", {
-        class: "facelist-img",
-        src: url,
-        alt: name,
-      });
-      const faceUbb = `[img]${url}[/img]`;
-      $(img).click(() => insetCustomContent(faceUbb, ".content [name='book_content']", true));
-      faceListHtml.push(img);
-    });
-    $(".facelist-div").append(faceListHtml);
-  }
-  // ubb
-  function createUbbListEle() {
-    if (window.location.pathname === "/bbs/book_view_mod.aspx") {
-      // 修改帖子
-      $(".content .centered-container").eq(1).before('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
-    } else {
-      // 发布帖子
-      $(".content .book_view_add_height").eq(1).after('<div class="ubb-list-div" style="margin:0 0 6px;"></div>');
-    }
-
-    // 生成 ubb 按钮
-    const betterUbbListHtml = [];
-    betterUbbList.txt.forEach((ubbItem) => {
-      const { name, upload } = ubbItem;
-      let ubbSpanEle = null;
-      if (upload?.type?.length > 0) {
-        ubbSpanEle = $(`
-            <input type="file" id="upload-${upload.type}" style="display: none;" accept="${upload.accept}" multiple/>
-            <span class="ubb-item">${name}</span>
-        `);
-      } else {
-        ubbSpanEle = $(`<span class="ubb-item">${name}</span>`);
-      }
-      betterUbbListHtml.push(ubbSpanEle);
-    });
-    $(".ubb-list-div").append(betterUbbListHtml);
-    // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
-    betterUbbList.txt.forEach((ubbItem) => {
-      const { name, inputTitle, ubb, upload, jxApiUrl } = ubbItem;
-      $(`.ubb-list-div .ubb-item:contains("${name}")`).click(() => {
-        if (inputTitle?.length > 0 && !jxApiUrl) {
-          // 输入域
-          showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubb(inputResult), ".content [name='book_content']", true));
-        } else if (inputTitle?.length > 0 && jxApiUrl?.length > 0) {
-          // 外链解析
-          showInputPopup(inputTitle, async (inputResult) => {
-            const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
-            await getVideoPlayUrl(targetUrl[0]);
-          });
-        } else if (upload) {
-          // 上传文件
-          $(`.ubb-list-div #upload-${upload.type}`).click();
-          // 文件选择回调事件
-          $(`.ubb-list-div #upload-${upload.type}`).change(function () {
-            const tempFiles = this.files;
-            if (tempFiles.length > 0) {
-              if (tempFiles.length > 10) {
-                notifyBox("一次最多选择 10 个文件", false);
-                return;
-              }
-              // 上传等待提示
-              showWaitBox("上传中…");
-              const uploadResults = []; // 存储上传结果的数组
-              for (const file of tempFiles) {
-                try {
-                  switch (upload.type) {
-                    case "img":
-                      const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
-                      const options = {};
-                      if (getUserSetting("imgUploadSelOpt") == 1) {
-                        // 水墨图床添加 token
-                        options.headers = { token: getUserSetting("suimoToken") };
-                      }
-                      const data = new FormData();
-                      data.append("image", file);
-                      uploadFiles(url, data, options, (response) => {
-                        const { code, msg, data } = response;
-                        if (code == 200) {
-                          uploadResults.push(data.url);
-                          insetCustomContent(ubb([data.url]), ".content [name='book_content']", true);
-                        } else {
-                          // notifyBox(msg, false);
-                        }
-                      });
-                      break;
-                    case "movie":
-                      break;
-                    case "audio":
-                      break;
-                    default:
-                      break;
-                  }
-                } catch (error) {
-                  // notifyBox(`文件 ${file.name} 上传失败`, false);
-                  console.error(error);
-                }
-              }
-              // 关闭等待提示
-              $(".wait-box-overlay").remove();
-              if (uploadResults.length > 0) {
-                setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件，失败 ${tempFiles} 个文件`), 300);
-              }
-              // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
-            } else {
-              notifyBox("请选择文件", false);
-            }
-          });
-        }
-      });
-    });
-  }
-  // 按钮
+  // 生成按钮
   function createToggleEle() {
     const toggleEle = $(
       `<span class="custom-toggle-btn ubb-btn" style="font-size:10px;margin-right:0;">${
         getUserSetting("showBookViewUbb") ? "折叠 UBB" : "展开 UBB"
       }</span>
-      <span class="custom-toggle-btn face-btn" style="font-size:10px;margin-left:0;">${
-        getUserSetting("showBookViewFace") ? "表情折叠" : "表情展开"
+      <span class="custom-toggle-btn emoji-btn" style="font-size:10px;margin-left:0;">${
+        getUserSetting("showBookViewEmoji") ? "表情折叠" : "表情展开"
       }</span>
       `
     );
     if (window.location.pathname === "/bbs/book_view_mod.aspx") {
       // 修改帖子
-      $(".content .centered-container + br").before(toggleEle);
+      $("label").each(function () {
+        const labelContent = $(this).html();
+        if (labelContent == "内容") {
+          $(this).replaceWith(`
+            <div class="content-header"><label>内容</label><div class="textarea-actions"></div>
+          `);
+        }
+      });
+      $(".upload-container .form-group .textarea-actions").append(toggleEle);
     } else {
       // 发布帖子
-      $(".content #saveDraftButton").before(toggleEle);
+      $(".content .textarea-actions #saveDraftButton").before(toggleEle);
     }
     // ubb 展开按钮
     $(".custom-toggle-btn.ubb-btn").click(function () {
-      $(".ubb-list-div").toggle();
+      $(".ubblist-div").toggle();
       const showBookViewUbb = getUserSetting("showBookViewUbb");
       if (showBookViewUbb) {
         saveUserSetting("showBookViewUbb", false);
@@ -1304,18 +1465,126 @@ function bookViewAddUbb() {
       }
     });
     // 表情展开按钮
-    $(".custom-toggle-btn+.face-btn").click(function () {
-      $(".facelist-div").toggle();
-      const showBookViewFace = getUserSetting("showBookViewFace");
-      if (showBookViewFace) {
-        saveUserSetting("showBookViewFace", false);
+    $(".custom-toggle-btn+.emoji-btn").click(function () {
+      $(".emojilist-div").toggle();
+      const showBookViewEmoji = getUserSetting("showBookViewEmoji");
+      if (showBookViewEmoji) {
+        saveUserSetting("showBookViewEmoji", false);
         $(this).text("表情展开");
       } else {
-        saveUserSetting("showBookViewFace", true);
+        saveUserSetting("showBookViewEmoji", true);
         $(this).text("表情折叠");
       }
     });
   }
+}
+// ubb 节点
+function createUbbHtml(insertEle) {
+  // 生成 ubb 按钮
+  const ubbListHtml = [];
+  ubbList.forEach((ubbItem) => {
+    const { name, upload } = ubbItem;
+    let ubbSpanEle = null;
+    if (upload?.type?.length > 0) {
+      ubbSpanEle = $(`
+            <input type="file" id="upload-${upload.type}" style="display: none;" accept="${upload.accept}" multiple/>
+            <span class="ubb-item">${name}</span>
+        `);
+    } else {
+      ubbSpanEle = $(`<span class="ubb-item">${name}</span>`);
+    }
+    ubbListHtml.push(ubbSpanEle);
+  });
+  $(".ubblist-div").append(ubbListHtml);
+  // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
+  ubbList.forEach((ubbItem) => {
+    const { name, inputTitle, ubb, upload, jxApiUrl } = ubbItem;
+    $(`.ubblist-div .ubb-item:contains("${name}")`).click(() => {
+      if (inputTitle?.length > 0 && !jxApiUrl) {
+        // 输入域
+        showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubb(inputResult), insertEle, true));
+      } else if (inputTitle?.length > 0 && jxApiUrl?.length > 0) {
+        // 外链解析
+        showInputPopup(inputTitle, async (inputResult) => {
+          const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
+          await getVideoPlayUrl(targetUrl[0]);
+        });
+      } else if (upload) {
+        // 上传文件
+        $(`.ubblist-div #upload-${upload.type}`).click();
+        // 文件选择回调事件
+        $(`.ubblist-div #upload-${upload.type}`).change(function () {
+          const tempFiles = this.files;
+          if (tempFiles.length > 0) {
+            if (tempFiles.length > 10) {
+              notifyBox("一次最多选择 10 个文件", false);
+              return;
+            }
+            // 上传等待提示
+            showWaitBox("上传中…");
+            const uploadResults = []; // 存储上传结果的数组
+            for (const file of tempFiles) {
+              try {
+                switch (upload.type) {
+                  case "img":
+                    const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
+                    const options = {};
+                    if (getUserSetting("imgUploadSelOpt") == 1) {
+                      // 水墨图床添加 token
+                      options.headers = { token: getUserSetting("suimoToken") };
+                    }
+                    const data = new FormData();
+                    data.append("image", file);
+                    uploadFiles(url, data, options, (response) => {
+                      const { code, msg, data } = response;
+                      if (code == 200) {
+                        uploadResults.push(data.url);
+                        insetCustomContent(ubb([data.url]), insertEle, true);
+                      } else {
+                        // notifyBox(msg, false);
+                      }
+                    });
+                    break;
+                  case "movie":
+                    break;
+                  case "audio":
+                    break;
+                  default:
+                    break;
+                }
+              } catch (error) {
+                // notifyBox(`文件 ${file.name} 上传失败`, false);
+                console.error(error);
+              }
+            }
+            // 关闭等待提示
+            $(".wait-box-overlay").remove();
+            if (uploadResults.length > 0) {
+              setTimeout(() => notifyBox(`已成功上传 ${uploadResults.length} 个文件，失败 ${tempFiles} 个文件`), 300);
+            }
+            // console.log("%c ===> [ 所有文件上传完成 ] <===", "font-size:13px; background:pink; color:#bf2c9f;", uploadResults);
+          } else {
+            notifyBox("请选择文件", false);
+          }
+        });
+      }
+    });
+  });
+}
+// 表情 节点
+function createEmojiHtml(insertEle) {
+  const emojiListHtml = [];
+  emojiList.forEach((faceitem) => {
+    const { name, url } = faceitem;
+    const img = $("<img/>", {
+      class: "emojilist-img",
+      src: url,
+      alt: name,
+    });
+    $(img).click(() => insetCustomContent(`[img]${url}[/img]`, insertEle, true));
+    emojiListHtml.push(img);
+  });
+  $(".emojilist-div").append(emojiListHtml);
 }
 // 修改图片大小
 function changeImgSize() {
@@ -1323,7 +1592,7 @@ function changeImgSize() {
   if (imgThumbWidth <= 0) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
   $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
 
-  $("img").each(function () {
+  $(".bbscontent img").each(function () {
     const imageWidth = $(this).width(); // 获取当前图片的显示宽度
     // 排除表情，不缩放
     if (imgThumbWidth && imageWidth >= 200) {
@@ -1335,77 +1604,6 @@ function changeImgSize() {
     e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
     $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
   });
-}
-// 帖子页面表情增强
-function loadEmoji() {
-  // 移除默认表情展开按钮及弹出内容区域
-  $(".viewContent .ulselect").remove();
-  $(".viewContent .emoticon-popup").remove();
-
-  createVEle();
-  addDefaultFace();
-  addDiyFace();
-  if (!getUserSetting("showFaceList")) {
-    $(".facelist-div").hide();
-  }
-
-  function insertTextarea(face) {
-    const insertToUbb = `[img]${face.url}[/img]`;
-    insetCustomContent(insertToUbb, ".centered-container .retextarea", true);
-  }
-  function addDiyFace() {
-    const faceListDiv = $(".facelist-div");
-    const diyFaceListHtml = [];
-    diyFaceList.forEach((item) => {
-      const { name, url } = item;
-      const img = $("<img/>", {
-        class: "facelist-img",
-        src: url,
-        alt: name,
-      });
-      $(img).click(() => insertTextarea(item));
-      diyFaceListHtml.push(img);
-    });
-    faceListDiv.append(diyFaceListHtml);
-  }
-  function addDefaultFace() {
-    const faceListDiv = $(".facelist-div");
-    const defaultEmojiHtml = [];
-    defaultFaceList.forEach((item) => {
-      const { name, url } = item;
-      const img = $("<img/>", {
-        class: "facelist-img",
-        src: url,
-        alt: name,
-      });
-      $(img).click(() => insertTextarea(item));
-      defaultEmojiHtml.push(img);
-    });
-    faceListDiv.append(defaultEmojiHtml);
-  }
-  function createVEle() {
-    const vSpan = $(`<span class='custom-toggle-btn'>${getUserSetting("showFaceList") ? "表情折叠" : "表情展开"}</span>`);
-    vSpan.css({
-      "margin-left": "10px",
-      "padding": "2px 10px",
-    });
-    vSpan.insertBefore(".viewContent .tongzhi");
-    vSpan.click(function () {
-      const showFaceList = getUserSetting("showFaceList");
-      if (showFaceList) {
-        saveUserSetting("showFaceList", false);
-        $(this).text("表情展开");
-        $(".facelist-div").hide();
-      } else {
-        saveUserSetting("showFaceList", true);
-        $(this).text("表情折叠");
-        $(".facelist-div").show();
-      }
-    });
-
-    const vDiv = $('<div class="facelist-div"></div>');
-    vDiv.insertBefore(".viewContent .centered-container");
-  }
 }
 // 复读机(回帖+1)
 function huifuCopy() {
