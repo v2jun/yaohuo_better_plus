@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.5.1
+// @version         1.5.2
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -27,10 +27,10 @@ const defaultSetting = {
   showTopAndDownBtn: true, // 显示一键回到顶部/底部
   hideXunzhang: true, // 隐藏勋章
 
-  showBookViewUbb: true, // 发帖 ubb 展开
-  showBookViewEmoji: true, // 发帖表情展开
-  showHuifuUbb: true, // 回帖 ubb 展开
-  showHuifuEmoji: true, // 回帖表情展开
+  showBookViewUbb: false, // 发帖 ubb 展开
+  showBookViewEmoji: false, // 发帖表情展开
+  showHuifuUbb: false, // 回帖 ubb 展开
+  showHuifuEmoji: false, // 回帖表情展开
 
   imgThumbWidth: 100, // 图片缩小后显示宽度
   useRight: false, // 下一页显示在右边
@@ -38,8 +38,8 @@ const defaultSetting = {
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
   openLayerForBook: false, // pc 端帖子在弹窗中打开
 
-  imgUploadSelOpt: 0, // 使用图床
   imgUploadApiUrl: ["https://aapi.helioho.st/upload.php", "https://img.ink/api/upload"],
+  imgUploadSelOpt: 0, // 使用图床
   suimoToken: "", // 水墨图床 token
 
   showMoreSetting: true, // 高级设置
@@ -340,7 +340,7 @@ const customCSS = `
     padding: 20px;
     border-radius: 5px;
     width: 600px;
-    max-width:90%;
+    max-width:80%;
   }
   .input-popup-label {
     display: block;
@@ -818,13 +818,9 @@ function huifuBetter() {
 function bookViewBetter() {
   createToggleEle();
 
-  let contentHeader = null;
-  if (window.location.pathname === "/bbs/book_view_add.aspx") {
-    // 发布帖子
-    contentHeader = $(".upload-container .form-group .content-header").eq(1);
-  } else {
-    // 修改帖子
-    contentHeader = $(".upload-container .form-group .content-header");
+  let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
+  if (window.location.pathname != "/bbs/book_view_add.aspx") {
+    contentHeader = $(".upload-container .form-group .content-header"); // 修改帖子
   }
   contentHeader.after('<div class="emojilist-div bookview-emoji"></div>');
   createEmojiHtml(".upload-container .form-group [name='book_content']");
@@ -922,59 +918,62 @@ function createUbbHtml(insertEle) {
         // 点击隐藏的上传选择文件按钮
         $(`.ubblist-div #upload-${upload.type}`).click();
         // 文件选择回调事件
-        $(`.ubblist-div #upload-${upload.type}`).change(function () {
-          const tempFiles = this.files;
-          if (tempFiles.length == 0) {
-            notifyBox("请选择文件", false);
-            return;
-          }
-          if (tempFiles.length > 10) {
-            notifyBox("一次最多选择 10 个文件", false);
-            return;
-          }
-
-          showWaitBox("上传中…"); // 上传等待提示
-          const uploadCount = { success: 0, fail: 0 }; // 存储上传结果数量
-          for (const file of tempFiles) {
-            switch (upload.type) {
-              case "img":
-                const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
-                const options = {};
-                if (getUserSetting("imgUploadSelOpt") == 1) {
-                  // 水墨图床添加 token
-                  options.headers = { token: getUserSetting("suimoToken") };
-                }
-                const data = new FormData();
-                data.append("image", file);
-                uploadFiles(url, data, options, (response) => {
-                  const { code, msg, data } = response;
-                  if (code == 200) {
-                    insetCustomContent(ubbHandle([data.url]), insertEle, true);
-                    uploadCount.success++;
-                  } else {
-                    uploadCount.fail++;
-                    // notifyBox(msg, false);
-                  }
-                  if (uploadCount.success + uploadCount.fail == tempFiles.length) {
-                    // 关闭等待提示
-                    $(".wait-box-overlay").remove();
-                    setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 300);
-                  }
-                });
-                break;
-              case "movie":
-                $(".wait-box-overlay").remove();
-                break;
-              case "audio":
-                $(".wait-box-overlay").remove();
-                break;
-              default:
-                notifyBox(`非法选择`);
-                $(".wait-box-overlay").remove();
-                break;
+        $(`.ubblist-div #upload-${upload.type}`)
+          .off("input")
+          .on("input", function () {
+            const fileInput = this;
+            const tempFiles = this.files;
+            if (tempFiles.length == 0) {
+              notifyBox("请选择文件", false);
+              return;
             }
-          }
-        });
+            if (tempFiles.length > 10) {
+              notifyBox("一次最多选择 10 个文件", false);
+              return;
+            }
+
+            showWaitBox("上传中…"); // 上传等待提示
+            const uploadCount = { success: 0, fail: 0 }; // 存储上传结果数量
+            for (const file of tempFiles) {
+              switch (upload.type) {
+                case "img":
+                  const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
+                  const options = {};
+                  if (getUserSetting("imgUploadSelOpt") == 1) {
+                    // 水墨图床添加 token
+                    options.headers = { token: getUserSetting("suimoToken") };
+                  }
+                  const data = new FormData();
+                  data.append("image", file);
+                  uploadFiles(url, data, options, (response) => {
+                    const { code, msg, data } = response;
+                    if (code == 200) {
+                      insetCustomContent(ubbHandle([data.url]), insertEle, true);
+                      uploadCount.success++;
+                    } else {
+                      uploadCount.fail++;
+                      // notifyBox(msg, false);
+                    }
+                    if (uploadCount.success + uploadCount.fail == tempFiles.length) {
+                      $(".wait-box-overlay").remove(); // 关闭等待提示
+                      setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 300);
+                      $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
+                    }
+                  });
+                  break;
+                case "movie":
+                  $(".wait-box-overlay").remove();
+                  break;
+                case "audio":
+                  $(".wait-box-overlay").remove();
+                  break;
+                default:
+                  notifyBox(`非法选择`);
+                  $(".wait-box-overlay").remove();
+                  break;
+              }
+            }
+          });
       }
     });
   });
@@ -994,6 +993,78 @@ function createEmojiHtml(insertEle) {
 }
 // 修改图片大小
 function changeImgSize() {
+  setBbsContentImg();
+  setReContentImg();
+
+  function setReContentImg() {
+    $(".recontent img").each(function () {
+      if (this.complete) {
+        handleImageLoad(this);
+      } else {
+        $(this).on("load", function () {
+          handleImageLoad(this);
+        });
+      }
+    });
+    $("body").on("load", "img", function () {
+      handleImageLoad(this);
+    });
+    function handleImageLoad(img) {
+      if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
+
+      $(img).css({
+        width: "100px",
+        height: "auto", // 按比例缩放
+        display: "block", // 设置为 block
+      });
+    }
+  }
+  function setBbsContentImg() {
+    // 监测已有图片
+    $(".bbscontent img").each(function () {
+      if (this.complete) {
+        handleImageLoad(this); // 如果图片已经加载完成
+      } else {
+        $(this).on("load", function () {
+          handleImageLoad(this);
+        });
+      }
+    });
+    // 监测新增图片
+    $("body").on("load", "img", function () {
+      handleImageLoad(this);
+    });
+    $("body").on("click", "img", function (e) {
+      e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
+      $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
+    });
+
+    function shouldExclude(img) {
+      const excludedClasses = []; // 需要排除的 class
+      const excludedIds = ["settingICon"]; // 需要排除的 id
+
+      // 判断是否包含排除的 class 或 id
+      return excludedClasses.some((cls) => $(img).hasClass(cls)) || excludedIds.includes($(img).attr("id"));
+    }
+    // 图片加载完成
+    function handleImageLoad(img) {
+      // console.log("图片加载完成:", img.src);
+      const imgThumbWidth = getUserSetting("imgThumbWidth");
+      if (!imgThumbWidth) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
+      if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
+      if (shouldExclude(img)) return; // 跳过指定 class 或 id 的图片
+
+      $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
+      $(img).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
+      // $(img).css({
+      //   width: `${imgThumbWidth}px`,
+      //   height: "auto", // 按比例缩放
+      //   display: "block", // 设置为 block
+      // });
+    }
+  }
+}
+function changeImgSize2() {
   const imgThumbWidth = getUserSetting("imgThumbWidth");
   if (imgThumbWidth <= 0) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
   $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
