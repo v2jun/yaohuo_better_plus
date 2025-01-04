@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.5.2
+// @version         1.5.3
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,18 +21,21 @@
 
 // 脚本默认设置
 const defaultSetting = {
+  version: "1.5.3", // 脚本版本
+  checkVersion: true, // 检查更新
+
   firstLoadScript: true, // 第一次加载脚本
   showSettingIcon: true, // 显示设置 logo
   settingIconSize: 50, // 设置 logo 大小
   showTopAndDownBtn: true, // 显示一键回到顶部/底部
-  hideXunzhang: true, // 隐藏勋章
+  hideXunzhang: false, // 隐藏勋章
 
   showBookViewUbb: false, // 发帖 ubb 展开
   showBookViewEmoji: false, // 发帖表情展开
   showHuifuUbb: false, // 回帖 ubb 展开
   showHuifuEmoji: false, // 回帖表情展开
 
-  imgThumbWidth: 100, // 图片缩小后显示宽度
+  imgThumbWidth: 200, // 图片缩小后显示宽度
   useRight: false, // 下一页显示在右边
   autoLoadMoreBookList: false, // 帖子列表自动加载更多
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
@@ -207,7 +210,7 @@ const customCSS = `
   /* 表情增强 样式 */
   .emojilist-div{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
     grid-gap: 2px;
     /*display: flex;
     justify-content: space-between;
@@ -219,8 +222,8 @@ const customCSS = `
     border-radius: 5px;
   }
   .emojilist-img{
-    width:40px;
-    height:40px;
+    width:50px;
+    height:50px;
   }
   .huifu-emoji{
     margin:0 1% 5px;
@@ -485,38 +488,54 @@ const emojiList = [
   "https://pic2.ziyuan.wang/user/v2jun/2024/12/webwxgetmsgimg_6723d2f29219d.jpg",
   "https://pic2.ziyuan.wang/user/v2jun/2024/12/webwxgetmsgimg_0c538a929de62.gif",
   "https://pic2.ziyuan.wang/user/v2jun/2024/12/webwxgetmsgimg_05208a26bf538.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_80e3cbbc106d8.jpg",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_7a85e377185b6.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_17024a36c62c1.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_aa11042623721.jpg",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_0b17ce20017e5.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_0b3366c8e4f2c.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_f5e49c8b9fb10.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_d7784aa75cade.png",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_da4d598a0038a.jpg",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_e1edb813037b0.gif",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/01/webwxgetmsgimg_acce220dbe392.gif",
 ];
 // ubb
 const ubbList = [
   {
     name: "超链接",
-    inputTitle: ["网址", "文字说明"],
+    inputTitle: ["网址", "网址说明"],
     ubbHandle: (inputValues) => `[url=${inputValues[0]}]${inputValues[1]}[/url]`,
   },
   {
     name: "红字",
-    inputTitle: ["文本内容"],
+    inputTitle: ["红字内容"],
     ubbHandle: (inputValues) => `[forecolor=red]${inputValues[0]}[/forecolor]`,
   },
   {
     name: "加粗",
-    inputTitle: ["文本内容"],
+    inputTitle: ["加粗内容"],
     ubbHandle: (inputValues) => `[b]${inputValues[0]}[/b]`,
   },
   {
     name: "斜体",
-    inputTitle: ["文本内容"],
+    inputTitle: ["斜体内容"],
     ubbHandle: (inputValues) => `[i]${inputValues[0]}[/i]`,
   },
   {
     name: "下划线",
-    inputTitle: ["文本内容"],
+    inputTitle: ["下划线内容"],
     ubbHandle: (inputValues) => `[u]${inputValues[0]}[/u]`,
   },
   {
     name: "删除线",
-    inputTitle: ["文本内容"],
+    inputTitle: ["删除线内容"],
     ubbHandle: (inputValues) => `[strike]${inputValues[0]}[/strike]`,
+  },
+  {
+    name: "分割线",
+    inputTitle: ["不需要输入内容，直接点击确定即可"],
+    ubbHandle: (inputValues) => `[hr]`,
   },
   {
     name: "代码",
@@ -530,9 +549,14 @@ const ubbList = [
     ubbHandle: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
   },
   {
+    name: "当前时间",
+    inputTitle: ["不需要输入内容，直接点击确定即可"],
+    ubbHandle: (inputValues) => `[now]`,
+  },
+  {
     name: "倒计时天数",
     inputTitle: ["需要倒计时的日期(格式：2030-01-01)"],
-    ubbHandle: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
+    ubbHandle: (inputValues) => `[codo]${inputValues[0]}[/codo]`,
   },
   {
     name: "QQ音乐",
@@ -630,8 +654,20 @@ const settingIconBase64 =
     userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/, autoLoadMoreHuifuList, true);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
   });
-})();
 
+  checkVersion();
+})();
+// 检查更新
+function checkVersion() {
+  sessionStorage.removeItem("canUpdate");
+  myAjax("https://greasyfork.org/scripts/504289.json").then((data) => {
+    console.log("%c ===> [ data ] <===", "font-size:13px; background:pink; color:#bf2c9f;", data);
+    const { version } = data;
+    if (version == getUserSetting("version")) return;
+    notifyBox("已有新版本，请自行更新。如不需要更新，可在设置里关闭", false, 3000);
+    sessionStorage.setItem("canUpdate", true);
+  });
+}
 // PC端点击帖子弹窗打开
 function openLayer(url) {
   if (!isPC()) return;
@@ -1056,31 +1092,8 @@ function changeImgSize() {
 
       $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
       $(img).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
-      // $(img).css({
-      //   width: `${imgThumbWidth}px`,
-      //   height: "auto", // 按比例缩放
-      //   display: "block", // 设置为 block
-      // });
     }
   }
-}
-function changeImgSize2() {
-  const imgThumbWidth = getUserSetting("imgThumbWidth");
-  if (imgThumbWidth <= 0) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
-  $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
-
-  $(".bbscontent img").each(function () {
-    const imageWidth = $(this).width(); // 获取当前图片的显示宽度
-    // 排除表情，不缩放
-    if (imgThumbWidth && imageWidth >= 200) {
-      $(this).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
-    }
-  });
-
-  $("body").on("click", "img", function (e) {
-    e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
-    $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
-  });
 }
 // 复读机(回帖+1)
 function huifuCopy() {
@@ -1445,8 +1458,13 @@ function createScriptSetting() {
       <div class="setting-div">
         <h2 class="reset setting-title">妖火增强插件Plus</h2>
         <p class="reset" style="font-size:12px;">
-          Author：
-          <a href="/bbs/userinfo.aspx?touserid=27894" style="font-size:12px;">柠檬没有汁@27894</a>
+          Author：<a href="/bbs/userinfo.aspx?touserid=27894" style="font-size:12px;">柠檬没有汁@27894</a>
+        </p>
+        <p class="reset" style="font-size:12px;margin-top:-15px;">
+          Version：${getUserSetting("version")}
+        </p>
+        <p style="font-size:12px;margin-top:-15px;color:red;${sessionStorage.getItem("canUpdate") ? "" : "display:none;"}">
+          已有新版本，请及时更新
         </p>
         <ul style="margin:0;padding:0;">
           <li class="setting-li-title"><hr><b>关于脚本</b><hr></li>
@@ -1477,6 +1495,18 @@ function createScriptSetting() {
           </li>
           <li class="setting-li-tips">
             <span>设置入口图标大小，设置为 0 时不显示</span>
+          </li>
+          <li class="setting-li-between">
+            <span>检查更新</span>
+            <div class="switch">
+              <input name="checkVersion" value="true" ${
+                getUserSetting("checkVersion") ? "checked" : ""
+              }  class="switch-checkbox" id="checkVersion" type="checkbox">
+              <label class="switch-label" for="checkVersion">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
           </li>
           <li class="setting-li-between">
             <span>一键回到顶部/底部</span>
@@ -1666,48 +1696,46 @@ function createScriptSetting() {
     // 取消按钮
     $(".setting-div .setting-cancel-btn").click(closePopupContainer);
     // 提交按钮
-    $(".setting-div .setting-confirm-btn").click(
-      debounce(() => {
-        const formData = {};
-        $('form[name="settingForm"]')
-          .find("input, select")
-          .each(function () {
-            // 根据不同输入方式格式化值，否则全部为字符串
-            if ($(this).is(":checkbox")) {
-              formData[this.name] = this.checked;
-            } else if ($(this).is(":radio")) {
-              const checkedValue = $('form[name="settingForm"]')
-                .find('[name="' + this.name + '"]:checked')
-                .val();
-              formData[this.name] = checkedValue !== undefined ? checkedValue : null;
-            } else if ($(this).attr("type") === "number") {
-              formData[this.name] = parseFloat(this.value);
-            } else if ($(this).attr("type") === "date") {
-              formData[this.name] = new Date(this.value);
-            } else if ($(this).is("select")) {
-              formData[this.name] = parseFloat(this.value);
-            } else {
-              formData[this.name] = this.value;
-            }
-          });
+    $(".setting-div .setting-confirm-btn").click(() => {
+      const formData = {};
+      $('form[name="settingForm"]')
+        .find("input, select")
+        .each(function () {
+          // 根据不同输入方式格式化值，否则全部为字符串
+          if ($(this).is(":checkbox")) {
+            formData[this.name] = this.checked;
+          } else if ($(this).is(":radio")) {
+            const checkedValue = $('form[name="settingForm"]')
+              .find('[name="' + this.name + '"]:checked')
+              .val();
+            formData[this.name] = checkedValue !== undefined ? checkedValue : null;
+          } else if ($(this).attr("type") === "number") {
+            formData[this.name] = parseFloat(this.value);
+          } else if ($(this).attr("type") === "date") {
+            formData[this.name] = new Date(this.value);
+          } else if ($(this).is("select")) {
+            formData[this.name] = parseFloat(this.value);
+          } else {
+            formData[this.name] = this.value;
+          }
+        });
 
-        const cacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
-        for (const key of Object.keys(formData)) {
-          cacheSetting[key] = formData[key];
-        }
-        console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;", cacheSetting);
-        try {
-          localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(cacheSetting));
-          notifyBox("保存成功");
-        } catch (error) {
-          notifyBox("保存失败", false);
-        }
-        // 刷新页面以应用新设置
-        setTimeout(() => {
-          window.location.reload();
-        }, 300);
-      })
-    );
+      const cacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
+      for (const key of Object.keys(formData)) {
+        cacheSetting[key] = formData[key];
+      }
+      console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;", cacheSetting);
+      try {
+        localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(cacheSetting));
+        notifyBox("保存成功");
+      } catch (error) {
+        notifyBox("保存失败", false);
+      }
+      // 刷新页面以应用新设置
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
+    });
     // 根据用户设置决定是否显示水墨图床 token 设置
     if (getUserSetting("imgUploadSelOpt") != 1) $(".setting-div .sel-suimo").hide();
   }
