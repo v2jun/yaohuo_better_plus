@@ -663,7 +663,7 @@ function checkVersion() {
   sessionStorage.removeItem("newVersion");
   myAjax("https://greasyfork.org/scripts/504289.json").then((data) => {
     const { version } = data;
-    if (version == getUserSetting("version")) return;
+    if (version == defaultSetting.version || !getUserSetting("checkVersion")) return;
     notifyBox("已有新版本，请自行更新。如不需要更新，可在设置里关闭", false, 3000);
     sessionStorage.setItem("canUpdate", true);
     sessionStorage.setItem("newVersion", version);
