@@ -660,12 +660,13 @@ const settingIconBase64 =
 // 检查更新
 function checkVersion() {
   sessionStorage.removeItem("canUpdate");
+  sessionStorage.removeItem("newVersion");
   myAjax("https://greasyfork.org/scripts/504289.json").then((data) => {
-    console.log("%c ===> [ data ] <===", "font-size:13px; background:pink; color:#bf2c9f;", data);
     const { version } = data;
     if (version == getUserSetting("version")) return;
     notifyBox("已有新版本，请自行更新。如不需要更新，可在设置里关闭", false, 3000);
     sessionStorage.setItem("canUpdate", true);
+    sessionStorage.setItem("newVersion", version);
   });
 }
 // PC端点击帖子弹窗打开
@@ -1461,10 +1462,10 @@ function createScriptSetting() {
           Author：<a href="/bbs/userinfo.aspx?touserid=27894" style="font-size:12px;">柠檬没有汁@27894</a>
         </p>
         <p class="reset" style="font-size:12px;margin-top:-15px;">
-          Version：${getUserSetting("version")}
+          Version：${defaultSetting.version}
         </p>
         <p style="font-size:12px;margin-top:-15px;color:red;${sessionStorage.getItem("canUpdate") ? "" : "display:none;"}">
-          已有新版本，请及时更新
+          已有新版本：<span style="color:green;">${sessionStorage.getItem("newVersion")}</span>，请及时更新
         </p>
         <ul style="margin:0;padding:0;">
           <li class="setting-li-title"><hr><b>关于脚本</b><hr></li>
