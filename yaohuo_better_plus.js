@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.5.4
+// @version         1.6.1
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.5.4", // 脚本版本
+  version: "1.6.1", // 脚本版本
   checkVersion: true, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
