@@ -1690,6 +1690,7 @@ function createScriptSetting() {
     // 清除缓存
     $(".setting-div .clear-setting").click((e) => {
       localStorage.removeItem("yaohuoBetterPlusSetting");
+      localStorage.removeItem("jquery-3.7.1.min");
       setTimeout(() => {
         window.location.reload();
       }, 300);
