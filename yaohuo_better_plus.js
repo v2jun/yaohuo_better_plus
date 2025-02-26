@@ -1839,7 +1839,7 @@ function getVideoPlayUrl(shareText) {
   // 从分享文本中提取链接
   const urlRegex = /(https?:\/\/[^\s]+)/;
   const match = inputValue.match(urlRegex);
-  if (!match) {notifyBox('啥链接都没有，你解析个 der~')；return;}
+  if (!match) {notifyBox('啥链接都没有，你解析个 der~');return;}
   url = match[0];
       
   return new Promise((resolve, reject) => {
@@ -1848,7 +1848,7 @@ function getVideoPlayUrl(shareText) {
     } else if (url.includes("kuaishou")) {
     } else if (url.includes("bilibili")) {
     } else {
-      notifyBox('不支持的链接')；
+      notifyBox('不支持的链接');
       reject();
     }
   });
