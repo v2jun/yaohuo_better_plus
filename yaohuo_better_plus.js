@@ -34,9 +34,10 @@ const defaultSetting = {
   showBookViewEmoji: false, // 发帖表情展开
   // autoCloseBookViewUbb:false,// 发帖 ubb 点击后自动关闭
   autoCloseBookViewEmoji:false,// 发帖表情点击后自动关闭
-  // showHuifuUbb: false, // 回帖 ubb 展开
+
+  showHuifuUbb: false, // 回帖 ubb 展开
   showHuifuEmoji: false, // 回帖表情展开
-  autoCloseHuifuUbb:false,// 发帖 ubb 点击后自动关闭
+  // autoCloseHuifuUbb:false,// 发帖 ubb 点击后自动关闭
   autoCloseHuifuEmoji:false,// 发帖表情点击后自动关闭
 
   imgThumbWidth: 200, // 图片缩小后显示宽度
@@ -2071,8 +2072,8 @@ function insetCustomContent(content, targetEle, autoFocus = false) {
     textarea[0].selectionEnd = cursorPosition + content.length;
     textarea.focus();
 
-    getUserSetting('autoCloseBookViewUbb') && $(".emojilist-div.bookview-emoji").hide() && $('.custom-toggle-btn.view-emoji-toggle').text("表情 折叠") && saveUserSetting("showBookViewUbb", false);;
-    getUserSetting('autoCloseHuifuEmoji') && $(".emojilist-div.huifu-emoji").hide() && $('.custom-toggle-btn.huifu-emoji-toggle').text("表情 折叠") && saveUserSetting("showHuifuEmoji", false);;
+    getUserSetting('autoCloseBookViewUbb') && $(".emojilist-div.bookview-emoji").hide() && $('.custom-toggle-btn.view-emoji-toggle').text("表情 展开") && saveUserSetting("showBookViewEmoji", false);;
+    getUserSetting('autoCloseHuifuEmoji') && $(".emojilist-div.huifu-emoji").hide() && $('.custom-toggle-btn.huifu-emoji-toggle').text("表情 展开") && saveUserSetting("showHuifuEmoji", false);;
   } else {
     textarea.val(content);
   }
