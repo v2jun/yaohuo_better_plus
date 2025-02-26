@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.6.1
+// @version         1.6.2
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.6.1", // 脚本版本
+  version: "1.6.2", // 脚本版本
   checkVersion: true, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
@@ -32,8 +32,12 @@ const defaultSetting = {
 
   showBookViewUbb: false, // 发帖 ubb 展开
   showBookViewEmoji: false, // 发帖表情展开
-  showHuifuUbb: false, // 回帖 ubb 展开
+  // autoCloseBookViewUbb:false,// 发帖 ubb 点击后自动关闭
+  autoCloseBookViewEmoji:false,// 发帖表情点击后自动关闭
+  // showHuifuUbb: false, // 回帖 ubb 展开
   showHuifuEmoji: false, // 回帖表情展开
+  autoCloseHuifuUbb:false,// 发帖 ubb 点击后自动关闭
+  autoCloseHuifuEmoji:false,// 发帖表情点击后自动关闭
 
   imgThumbWidth: 200, // 图片缩小后显示宽度
   useRight: false, // 下一页显示在右边
@@ -656,6 +660,7 @@ const settingIconBase64 =
   });
 
   checkVersion();
+  // getVideoPlayUrl('https://v.douyin.com/i5FUpgES/')
 })();
 // 检查更新
 function checkVersion() {
@@ -818,7 +823,7 @@ function huifuBetter() {
   !getUserSetting("showHuifuUbb") && $(".ubblist-div.huifu-ubb").hide();
 
   function createToggleEle() {
-    const toggleEle = $(`<span class="custom-toggle-btn">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`);
+    const toggleEle = $(`<span class="custom-toggle-btn huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`);
     toggleEle.click(function () {
       $(".ubblist-div").toggle();
       const showHuifuUbb = getUserSetting("showHuifuUbb");
@@ -832,7 +837,7 @@ function huifuBetter() {
     });
     $(".viewContent .kuaisuhuifu").append(toggleEle);
 
-    const vSpan = $(`<span class='custom-toggle-btn'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`);
+    const vSpan = $(`<span class='custom-toggle-btn huifu-emoji-toggle'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`);
     vSpan.css({
       "margin-left": "10px",
       "padding": "2px 10px",
@@ -871,10 +876,10 @@ function bookViewBetter() {
   // 生成按钮
   function createToggleEle() {
     const toggleEle = $(
-      `<span class="custom-toggle-btn ubb-btn" style="font-size:10px;margin-right:0;">${
+      `<span class="custom-toggle-btn view-ubb-btn" style="font-size:10px;margin-right:0;">${
         getUserSetting("showBookViewUbb") ? "UBB 折叠" : "UBB 展开"
       }</span>
-      <span class="custom-toggle-btn emoji-btn" style="font-size:10px;margin-left:0;">${
+      <span class="custom-toggle-btn view-emoji-btn" style="font-size:10px;margin-left:0;">${
         getUserSetting("showBookViewEmoji") ? "表情 折叠" : "表情 展开"
       }</span>
       `
@@ -895,7 +900,7 @@ function bookViewBetter() {
       $(".content .textarea-actions #saveDraftButton").before(toggleEle);
     }
     // ubb 展开按钮
-    $(".custom-toggle-btn.ubb-btn").click(function () {
+    $(".custom-toggle-btn.view-ubb-btn").click(function () {
       $(".ubblist-div").toggle();
       const showBookViewUbb = getUserSetting("showBookViewUbb");
       if (showBookViewUbb) {
@@ -907,7 +912,7 @@ function bookViewBetter() {
       }
     });
     // 表情展开按钮
-    $(".custom-toggle-btn+.emoji-btn").click(function () {
+    $(".custom-toggle-btn.view-emoji-btn").click(function () {
       $(".emojilist-div").toggle();
       const showBookViewEmoji = getUserSetting("showBookViewEmoji");
       if (showBookViewEmoji) {
@@ -1030,70 +1035,42 @@ function createEmojiHtml(insertEle) {
 }
 // 修改图片大小
 function changeImgSize() {
-  setBbsContentImg();
-  setReContentImg();
-
-  function setReContentImg() {
-    $(".recontent img").each(function () {
-      if (this.complete) {
+  // 监测已有图片
+  $("body img").each(function () {
+    if (this.complete) {
+      handleImageLoad(this); // 如果图片已经加载完成
+    } else {
+      $(this).on("load", function () {
         handleImageLoad(this);
-      } else {
-        $(this).on("load", function () {
-          handleImageLoad(this);
-        });
-      }
-    });
-    $("body").on("load", "img", function () {
-      handleImageLoad(this);
-    });
-    function handleImageLoad(img) {
-      if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
-
-      $(img).css({
-        width: "100px",
-        height: "auto", // 按比例缩放
-        display: "block", // 设置为 block
       });
     }
+  });
+  // 监测新增图片
+  $("body").on("load", "img", function () {
+    handleImageLoad(this);
+  });
+  $("body").on("click", "img", function (e) {
+    e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
+    $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
+  });
+
+  function shouldExclude(img) {
+    const excludedClasses = []; // 需要排除的 class
+    const excludedIds = ["settingICon"]; // 需要排除的 id
+
+    // 判断是否包含排除的 class 或 id
+    return excludedClasses.some((cls) => $(img).hasClass(cls)) || excludedIds.includes($(img).attr("id"));
   }
-  function setBbsContentImg() {
-    // 监测已有图片
-    $(".bbscontent img").each(function () {
-      if (this.complete) {
-        handleImageLoad(this); // 如果图片已经加载完成
-      } else {
-        $(this).on("load", function () {
-          handleImageLoad(this);
-        });
-      }
-    });
-    // 监测新增图片
-    $("body").on("load", "img", function () {
-      handleImageLoad(this);
-    });
-    $("body").on("click", "img", function (e) {
-      e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
-      $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
-    });
+  // 图片加载完成
+  function handleImageLoad(img) {
+    // console.log("图片加载完成:", img.src);
+    const imgThumbWidth = getUserSetting("imgThumbWidth");
+    if (!imgThumbWidth) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
+    if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
+    if (shouldExclude(img)) return; // 跳过指定 class 或 id 的图片
 
-    function shouldExclude(img) {
-      const excludedClasses = []; // 需要排除的 class
-      const excludedIds = ["settingICon"]; // 需要排除的 id
-
-      // 判断是否包含排除的 class 或 id
-      return excludedClasses.some((cls) => $(img).hasClass(cls)) || excludedIds.includes($(img).attr("id"));
-    }
-    // 图片加载完成
-    function handleImageLoad(img) {
-      // console.log("图片加载完成:", img.src);
-      const imgThumbWidth = getUserSetting("imgThumbWidth");
-      if (!imgThumbWidth) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
-      if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
-      if (shouldExclude(img)) return; // 跳过指定 class 或 id 的图片
-
-      $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
-      $(img).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
-    }
+    $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
+    $(img).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
   }
 }
 // 复读机(回帖+1)
@@ -1601,6 +1578,30 @@ function createScriptSetting() {
             </div>
           </li>
           <li class="setting-li-tips">仅在PC端生效，且弹窗中无法使用脚本</li>
+          <li class="setting-li-between">
+            <span>发帖表情自动收起</span>
+            <div class="switch">
+              <input name="autoCloseBookViewEmoji" value="true" ${
+                getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
+              }  class="switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
+              <label class="switch-label" for="autoCloseBookViewEmoji">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-between">
+            <span>回帖表情自动收起</span>
+            <div class="switch">
+              <input name="autoCloseHuifuEmoji" value="true" ${
+                getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
+              }  class="switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
+              <label class="switch-label" for="autoCloseHuifuEmoji">
+                <span class="switch-inner" data-on="开" data-off="关"></span>
+                <span class="switch-switch"></span>
+              </label>
+            </div>
+          </li>
 
           <li class="setting-li-title more-setting more-setting-click" style="margin-bottom:0;"><hr><b>高级设置</b><hr></li>
           <li class="more-setting" style="font-size:12px;text-align:center;margin:-16px 0;color:red;">使用以下功能前请先熟读并背诵版规(手动狗头.jpg)</li>
@@ -1833,19 +1834,28 @@ function executeScript(scriptContent) {
   document.head.appendChild(script); // 执行脚本
 }
 // 解析各大视频平台url
-function getVideoPlayUrl(url) {
+function getVideoPlayUrl(shareText) {
+
+  // 从分享文本中提取链接
+  const urlRegex = /(https?:\/\/[^\s]+)/;
+  const match = inputValue.match(urlRegex);
+  if (!match) {notifyBox('啥链接都没有，你解析个 der~')；return;}
+  url = match[0];
+      
   return new Promise((resolve, reject) => {
     if (url.includes("douyin")) {
       resolve(dy());
     } else if (url.includes("kuaishou")) {
     } else if (url.includes("bilibili")) {
     } else {
+      notifyBox('不支持的链接')；
       reject();
     }
   });
-  function dy() {
-    const dyData = myAjax(url, { url }, "post", { headers: { "Access-Control-Allow-Origin": "*" } });
-    console.log("%c ===> [ dyData ] <===", "font-size:13px; background:pink; color:#bf2c9f;", dyData);
+
+  async function dy() {
+    const dyData =await myAjax('https://i.qdqqd.com/', { dyjx:url });
+    console.log("%c ===> [ dyData ] <===", "font-size:13px; background:pink; color:#bf2c9f;", dyData.video);
   }
 }
 
@@ -1957,19 +1967,19 @@ function scrollToEle(toEle, animateTime = 500) {
 }
 
 // Ajax 请求
-function myAjax(url, data, method = "Get", options) {
+function myAjax(url, data, options, type = "get") {
   return new Promise((resolve, reject) => {
     $.ajax({
       url,
-      method,
+      type,
       data,
+      ...options,
       success: (response) => {
         resolve(response);
       },
       error: (error) => {
         reject(error);
-      },
-      ...options,
+      }
     });
   });
 }
@@ -2058,6 +2068,8 @@ function insetCustomContent(content, targetEle, autoFocus = false) {
     textarea[0].selectionStart = cursorPosition + content.length;
     textarea[0].selectionEnd = cursorPosition + content.length;
     textarea.focus();
+    getUserSetting('autoCloseBookViewUbb') && $(".emojilist-div.bookview-emoji").hide() && $('.custom-toggle-btn.view-emoji-toggle').text("表情 折叠");
+    getUserSetting('autoCloseHuifuEmoji') && $(".emojilist-div.huifu-emoji").hide() && $('.custom-toggle-btn.huifu-emoji-toggle').text("表情 折叠");
   } else {
     textarea.val(content);
   }
