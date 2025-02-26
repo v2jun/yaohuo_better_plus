@@ -1067,9 +1067,9 @@ function changeImgSize() {
     const imgThumbWidth = getUserSetting("imgThumbWidth");
     if (!imgThumbWidth) return; // 防止设置为0时依旧添加点击事件，导致点击后页面内图片丢失
     if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
+    if ($(img).width() <= imgThumbWidth) return; // 太小的表情，不缩放
     if (shouldExclude(img)) return; // 跳过指定 class 或 id 的图片
 
-    $("head").append(`<style>.img-thumb{max-width:${imgThumbWidth}px;display: block;}`); // 将图片缩小样式添加到页面中
     $(img).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
   }
 }
@@ -2031,6 +2031,8 @@ function clickCounter(clickEle, callback, clickLimit = 3, timeLimit = 1) {
 function addCustomStyle() {
   // console.log("%c ===> [ 添加自定义样式 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
   $("<style>").text(customCSS).appendTo("head");
+
+  $("head").append(`<style>.img-thumb{max-width:${getUserSetting("imgThumbWidth")}px;display: block;}`); // 将图片缩小样式添加到页面中
 }
 /**
  * 防抖
@@ -2068,8 +2070,9 @@ function insetCustomContent(content, targetEle, autoFocus = false) {
     textarea[0].selectionStart = cursorPosition + content.length;
     textarea[0].selectionEnd = cursorPosition + content.length;
     textarea.focus();
-    getUserSetting('autoCloseBookViewUbb') && $(".emojilist-div.bookview-emoji").hide() && $('.custom-toggle-btn.view-emoji-toggle').text("表情 折叠");
-    getUserSetting('autoCloseHuifuEmoji') && $(".emojilist-div.huifu-emoji").hide() && $('.custom-toggle-btn.huifu-emoji-toggle').text("表情 折叠");
+
+    getUserSetting('autoCloseBookViewUbb') && $(".emojilist-div.bookview-emoji").hide() && $('.custom-toggle-btn.view-emoji-toggle').text("表情 折叠") && saveUserSetting("showBookViewUbb", false);;
+    getUserSetting('autoCloseHuifuEmoji') && $(".emojilist-div.huifu-emoji").hide() && $('.custom-toggle-btn.huifu-emoji-toggle').text("表情 折叠") && saveUserSetting("showHuifuEmoji", false);;
   } else {
     textarea.val(content);
   }
