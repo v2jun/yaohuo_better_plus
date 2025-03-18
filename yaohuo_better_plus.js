@@ -508,78 +508,94 @@ const emojiList = [
 // ubb
 const ubbList = [
   {
+    ubbType:'input',
     name: "超链接",
     inputTitle: ["网址", "网址说明"],
     ubbHandle: (inputValues) => `[url=${inputValues[0]}]${inputValues[1]}[/url]`,
   },
   {
+    ubbType:'input',
     name: "红字",
     inputTitle: ["红字内容"],
     ubbHandle: (inputValues) => `[forecolor=red]${inputValues[0]}[/forecolor]`,
   },
   {
+    ubbType:'input',
     name: "加粗",
     inputTitle: ["加粗内容"],
     ubbHandle: (inputValues) => `[b]${inputValues[0]}[/b]`,
   },
   {
+    ubbType:'input',
     name: "斜体",
     inputTitle: ["斜体内容"],
     ubbHandle: (inputValues) => `[i]${inputValues[0]}[/i]`,
   },
   {
+    ubbType:'input',
     name: "下划线",
     inputTitle: ["下划线内容"],
     ubbHandle: (inputValues) => `[u]${inputValues[0]}[/u]`,
   },
   {
+    ubbType:'input',
     name: "删除线",
     inputTitle: ["删除线内容"],
     ubbHandle: (inputValues) => `[strike]${inputValues[0]}[/strike]`,
   },
   {
+    ubbType:'input',
     name: "分割线",
     inputTitle: ["不需要输入内容，直接点击确定即可"],
     ubbHandle: (inputValues) => `[hr]`,
   },
   {
+    ubbType:'input',
     name: "代码",
     inputTitle: ["代码内容"],
     ubbHandle: (inputValues) => `[code]${inputValues[0]}[/code]`,
   },
-  { name: "拨号", inputTitle: ["手机号码"], ubbHandle: (inputValues) => `[call]${inputValues[0]}[/call]` },
+  { 
+    ubbType:'input',name: "拨号", inputTitle: ["手机号码"], ubbHandle: (inputValues) => `[call]${inputValues[0]}[/call]` },
   {
+    ubbType:'input',
     name: "发短信",
     inputTitle: ["手机号码", "短信内容"],
     ubbHandle: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
   },
   {
+    ubbType:'input',
     name: "当前时间",
     inputTitle: ["不需要输入内容，直接点击确定即可"],
     ubbHandle: (inputValues) => `[now]`,
   },
   {
+    ubbType:'input',
     name: "倒计时天数",
     inputTitle: ["需要倒计时的日期(格式：2030-01-01)"],
     ubbHandle: (inputValues) => `[codo]${inputValues[0]}[/codo]`,
   },
   {
+    ubbType:'input',
     name: "QQ音乐",
     inputTitle: ["QQ音乐歌曲链接或ID"],
     ubbHandle: (inputValues) => `[qqmusic]${inputValues[0]}[/qqmusic]`,
   },
   {
+    ubbType:'input',
     name: "网易云音乐",
     inputTitle: ["网易云音乐歌曲链接或ID"],
     ubbHandle: (inputValues) => `[wymusic]${inputValues[0]}[/wymusic]`,
   },
   {
+    ubbType:'input',
     name: "图片(外链)",
     inputTitle: ["图片链接"],
     ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]`,
   },
   // { name: "短链生成" },
   {
+    ubbType:'upload',
     name: "图片(上传)",
     ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]`,
     upload: {
@@ -588,6 +604,7 @@ const ubbList = [
     },
   },
   {
+    ubbType:'input',
     name: "视频",
     inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
     ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
@@ -597,6 +614,7 @@ const ubbList = [
     },
   },
   {
+    ubbType:'input',
     name: "音频",
     inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
     ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
@@ -605,15 +623,17 @@ const ubbList = [
       accept: "audio/*",
     },
   },
-  // {
-  //   name: "抖音解析",
-  //   inputTitle: ["链接(不需要去除中文和多余字符)"],
-  //   apiUrl: "https://v.695402.xyz/dyzl",
-  //   ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-  // },
-  // { name: "快手解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
-  // { name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
-  // { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], jxApiUrl: "", ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+  {
+    ubbType:'jxVideo',
+    name: "抖音解析",
+    inputTitle: ["链接(不需要去除中文和多余字符)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`,
+  },
+  { 
+    ubbType:'jxVideo',name: "快手解析", inputTitle: ["链接(不需要去除中文和多余字符)"], ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]` },
+  { ubbType:'jxVideo',name: "TikTok解析", inputTitle: ["链接(不需要去除中文和多余字符)"], ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]` },
+  // { ubbType:'jxVideo',name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
+  // { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
   // { name: "屋舍文件" },
 ];
 // 设置图标
@@ -661,7 +681,6 @@ const settingIconBase64 =
   });
 
   checkVersion();
-  // getVideoPlayUrl('https://v.douyin.com/i5FUpgES/')
 })();
 // 检查更新
 function checkVersion() {
@@ -946,18 +965,31 @@ function createUbbHtml(insertEle) {
   $(".ubblist-div").append(ubbListHtml);
   // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
   ubbList.forEach((ubbItem) => {
-    const { name, inputTitle, ubbHandle, upload, jxApiUrl } = ubbItem;
+    const { ubbType,name, inputTitle, ubbHandle, upload, } = ubbItem;
     $(`.ubblist-div .ubb-item:contains("${name}")`).click(() => {
-      if (inputTitle?.length > 0 && !jxApiUrl) {
+      if (ubbType=='input') {
         // 输入域
         showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubbHandle(inputResult), insertEle, true));
-      } else if (inputTitle?.length > 0 && jxApiUrl?.length > 0) {
+      } else if (ubbType=='jxVideo') {
         // 外链解析
-        showInputPopup(inputTitle, async (inputResult) => {
-          const targetUrl = /https:\/\/v\.d.+?\/\w+/.exec(inputResult[0]);
-          await getVideoPlayUrl(targetUrl[0]);
+        showInputPopup(inputTitle, (inputResult) => {
+          if(!inputResult) return false;
+
+          showWaitBox("解析中…");
+          // 从分享文本中提取链接
+          const urlRegex = /(https?:\/\/[^\s]+)/;
+          const match = inputResult[0].match(urlRegex);
+          if (!match) {notifyBox('啥链接都没有，你解析个 der~',false);$(".wait-box-overlay").remove();return false;}
+
+          getVideoPlayUrl(match[0],(videoUrl)=>{
+            if(!videoUrl) return false;
+
+            insetCustomContent(ubbHandle(videoUrl), insertEle, true);            
+            $(".wait-box-overlay").remove();
+            notifyBox('解析成功~');
+          });
         });
-      } else if (upload) {
+      } else if (ubbType=='upload') {
         // 点击隐藏的上传选择文件按钮
         $(`.ubblist-div #upload-${upload.type}`).click();
         // 文件选择回调事件
@@ -1047,9 +1079,40 @@ function changeImgSize() {
     }
   });
   // 监测新增图片
-  $("body").on("load", "img", function () {
-    handleImageLoad(this);
+  // $("body").on("load", "img", function () {
+  //   handleImageLoad(this);
+  // });
+  // 使用 jQuery 事件委托监听新增内容
+  $(document).on('DOMNodeInserted', '.reline, .forum-post .post-content', function(e) {
+    const $target = $(e.target);
+    if ($target.is('img')) {
+      if (!$target.hasClass('img-thumb-processed')) {
+        if ($target[0].complete) {
+          handleImageLoad($target[0]);
+        } else {
+          $target.on('load', function() {
+            handleImageLoad(this);
+          });
+        }
+        $target.addClass('img-thumb-processed');
+      }
+    }
+    
+    // 检查新插入节点中的图片
+    $target.find('img').each(function() {
+      if (!$(this).hasClass('img-thumb-processed')) {
+        if (this.complete) {
+          handleImageLoad(this);
+        } else {
+          $(this).on('load', function() {
+            handleImageLoad(this);
+          });
+        }
+        $(this).addClass('img-thumb-processed');
+      }
+    });
   });
+
   $("body").on("click", "img", function (e) {
     e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
     $(this).toggleClass("img-thumb"); // 给图片添加点击事件，添加/移除指定class，以实时修改图片大小
@@ -1835,28 +1898,31 @@ function executeScript(scriptContent) {
   document.head.appendChild(script); // 执行脚本
 }
 // 解析各大视频平台url
-function getVideoPlayUrl(shareText) {
-
-  // 从分享文本中提取链接
-  const urlRegex = /(https?:\/\/[^\s]+)/;
-  const match = inputValue.match(urlRegex);
-  if (!match) {notifyBox('啥链接都没有，你解析个 der~');return;}
-  url = match[0];
-      
-  return new Promise((resolve, reject) => {
+function getVideoPlayUrl(url,callback) {
+  return new Promise(async (resolve, reject) => {
     if (url.includes("douyin")) {
-      resolve(dy());
+      const res =await myAjax('https://i.qdqqd.com/', { dyjx:url });
+      if(res?.video?.length>0) callback(res.video);
+      else callback(false);
     } else if (url.includes("kuaishou")) {
+      const res =await myAjax('https://i.qdqqd.com/', { ksjx:url });
+      if(res?.video?.length>0) callback(res.video);
+      else callback(false);
     } else if (url.includes("bilibili")) {
-    } else {
-      notifyBox('不支持的链接');
-      reject();
+      const res =await myAjax('https://i.qdqqd.com/', { dyjx:url });
+      if(res?.video?.length>0) callback(res.video);
+      else callback(false);
+    } else if (url.includes("tiktok")) {
+      const res =await myAjax('https://i.qdqqd.com/', { tiktokjx:url });
+      if(res?.video?.length>0) callback(res.video);
+      else callback(false);
+    }else {
+      notifyBox('不支持的链接',false);
+      callback(false);
     }
   });
 
   async function dy() {
-    const dyData =await myAjax('https://i.qdqqd.com/', { dyjx:url });
-    console.log("%c ===> [ dyData ] <===", "font-size:13px; background:pink; color:#bf2c9f;", dyData.video);
   }
 }
 
