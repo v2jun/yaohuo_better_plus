@@ -555,6 +555,7 @@ const emojiList = [
   "https://pic2.ziyuan.wang/user/v2jun/2025/04/webwxgetmsgimg_52af195cce943.jpg",
   "https://pic2.ziyuan.wang/user/v2jun/2025/04/webwxgetmsgimg_78c1938f0e5cb.jpg",
   "https://pic2.ziyuan.wang/user/v2jun/2025/04/webwxgetmsgimg_254f5d90c59fc.jpg",
+  "https://pic2.ziyuan.wang/user/v2jun/2025/04/6ba11b67f84c108d4b83a0c60717f24_b41624539f24e.jpg"
 ];
 // ubb
 const ubbList = [{
