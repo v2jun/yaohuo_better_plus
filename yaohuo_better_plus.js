@@ -557,8 +557,7 @@ const emojiList = [
   "https://pic2.ziyuan.wang/user/v2jun/2025/04/webwxgetmsgimg_254f5d90c59fc.jpg",
 ];
 // ubb
-const ubbList = [
-  {
+const ubbList = [{
     ubbType: "input",
     name: "超链接",
     inputTitle: ["网址", "网址说明"],
@@ -724,12 +723,13 @@ const settingIconBase64 =
   "data:image/png;base64,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";
 /* ================================================== 变量结束 ================================================== */
 
-(async function () {
+(async function() {
   "use strict";
 
   if (!checkLocation()) return;
 
-  const jqueryIsLoad = await loadAndExecuteScript("https://code.jquery.com/jquery-3.7.1.min.js", "jquery-3.7.1.min");
+  const jqueryIsLoad = await loadAndExecuteScript("https://code.jquery.com/jquery-3.7.1.min.js",
+    "jquery-3.7.1.min");
   if (!jqueryIsLoad) return;
 
   const setttingIsInit = await initSetting();
@@ -748,18 +748,19 @@ const settingIconBase64 =
     createScriptSetting();
     userSetting["showTopAndDownBtn"] && addTopAndDown();
     userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
-    userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^\/bbs-.*\.html$/, speedEatMoney, true);
-    userSetting["hideXunzhang"] && executeFunctionForURL(/^\/bbs-.*\.html$/, hideXunzhang, true);
-    userSetting["showHuifuCopy"] && executeFunctionForURL(/^\/bbs-.*\.html$/, huifuCopy, true);
-    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx$/, bookViewBetter, true);
-    executeFunctionForURL(/^\/bbs-.*\.html$/, huifuBetter, true);
+    userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, speedEatMoney, true);
+    userSetting["hideXunzhang"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, hideXunzhang, true);
+    userSetting["showHuifuCopy"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, huifuCopy, true);
+    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx$/i, bookViewBetter, true);
+    executeFunctionForURL(/^\/bbs-.*\.html$/i, huifuBetter, true);
     userSetting["useRight"] && executeFunctionForURL("/bbs/book_list.aspx", useRightNextBtn);
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
-    executeFunctionForURL(/^\/bbs-.*\.html$/, changeImgSize, true);
+    executeFunctionForURL(/^\/bbs-.*\.html$/i, changeImgSize, true);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
-    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/, autoLoadMoreHuifuList, true);
+    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, autoLoadMoreHuifuList,
+      true);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
   });
 
@@ -770,7 +771,9 @@ function checkVersion() {
   sessionStorage.removeItem("canUpdate");
   sessionStorage.removeItem("newVersion");
   myAjax("https://greasyfork.org/scripts/504289.json").then((data) => {
-    const { version } = data;
+    const {
+      version
+    } = data;
     if (version <= defaultSetting.version || !getUserSetting("checkVersion")) return;
     notifyBox("已有新版本，请自行更新。如不需要更新，可在设置里关闭", false, 3000);
     sessionStorage.setItem("canUpdate", true);
@@ -783,7 +786,7 @@ function openLayer(url) {
   // 监听点击事件
   $(document)
     .off("click", ".listdata .topic-link")
-    .on("click", ".listdata .topic-link", function (event) {
+    .on("click", ".listdata .topic-link", function(event) {
       event.preventDefault(); // 阻止默认链接行为
       const url = $(this).attr("href"); // 获取链接的 href 属性
       openLayer(url);
@@ -838,7 +841,7 @@ function openLayer(url) {
   open_layer.show();
   background_layer.show();
   // 点击背景层时关闭弹出层
-  background_layer.on("click", function () {
+  background_layer.on("click", function() {
     open_layer.remove();
     background_layer.remove();
   });
@@ -851,7 +854,7 @@ function autoLoadMoreHuifuList() {
   let hasTriggered = false;
 
   // 监听滚动事件
-  $(window).scroll(function () {
+  $(window).scroll(function() {
     // 获取页面滚动的位置和文档高度
     const scrollTop = $(this).scrollTop();
     const windowHeight = $(this).height();
@@ -877,7 +880,7 @@ function autoLoadMoreBookList() {
   let hasTriggered = false;
 
   // 监听滚动事件
-  $(window).scroll(function () {
+  $(window).scroll(function() {
     // 获取页面滚动的位置和文档高度
     const scrollTop = $(this).scrollTop();
     const windowHeight = $(this).height();
@@ -915,125 +918,124 @@ function huifuBetter() {
   $(".viewContent .ulselect").remove();
   $(".viewContent .emoticon-popup").remove();
 
-  createToggleEle();
-
-  $(".viewContent .centered-container").before('<div class="emojilist-div huifu-emoji"></div>');
-  createEmojiHtml(".viewContent .sticky [name='content']");
-  $(".viewContent .sticky").after('<div class="ubblist-div huifu-ubb"></div>');
-  createUbbHtml(".viewContent .sticky [name='content']");
 
   !getUserSetting("showHuifuEmoji") && $(".emojilist-div.huifu-emoji").hide();
   !getUserSetting("showHuifuUbb") && $(".ubblist-div.huifu-ubb").hide();
 
-  function createToggleEle() {
-    const toggleEle = $(`<span class="custom-toggle-btn huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`);
-    toggleEle.click(function () {
-      $(".ubblist-div").toggle();
-      const showHuifuUbb = getUserSetting("showHuifuUbb");
-      if (showHuifuUbb) {
-        saveUserSetting("showHuifuUbb", false);
-        $(this).text("UBB 展开");
-      } else {
-        saveUserSetting("showHuifuUbb", true);
-        $(this).text("UBB 折叠");
-      }
-    });
-    $(".viewContent .kuaisuhuifu").append(toggleEle);
+  const toggleEle = $(
+    `<span class="custom-toggle-btn huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`
+  );
+  toggleEle.click(function() {
+    $(".ubblist-div").toggle();
+    const showHuifuUbb = getUserSetting("showHuifuUbb");
+    if (showHuifuUbb) {
+      saveUserSetting("showHuifuUbb", false);
+      $(this).text("UBB 展开");
+    } else {
+      saveUserSetting("showHuifuUbb", true);
+      $(this).text("UBB 折叠");
+    }
+  });
+  $(".viewContent .kuaisuhuifu").append(toggleEle);
 
-    const vSpan = $(`<span class='custom-toggle-btn huifu-emoji-toggle'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`);
-    vSpan.css({
-      "margin-left": "10px",
-      "padding": "2px 10px",
-    });
-    vSpan.insertBefore(".viewContent .tongzhi");
-    vSpan.click(function () {
-      $(".emojilist-div").toggle();
-      const showHuifuEmoji = getUserSetting("showHuifuEmoji");
-      if (showHuifuEmoji) {
-        saveUserSetting("showHuifuEmoji", false);
-        $(this).text("表情 展开");
-      } else {
-        saveUserSetting("showHuifuEmoji", true);
-        $(this).text("表情 折叠");
-      }
-    });
-  }
+  const vSpan = $(
+    `<span class='custom-toggle-btn huifu-emoji-toggle'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`
+  );
+  vSpan.css({
+    "margin-left": "10px",
+    "padding": "2px 10px",
+  });
+  vSpan.insertBefore(".viewContent .tongzhi");
+  vSpan.click(function() {
+    $(".emojilist-div").toggle();
+    const showHuifuEmoji = getUserSetting("showHuifuEmoji");
+    if (showHuifuEmoji) {
+      saveUserSetting("showHuifuEmoji", false);
+      $(this).text("表情 展开");
+    } else {
+      saveUserSetting("showHuifuEmoji", true);
+      $(this).text("表情 折叠");
+    }
+  });
+
+  $(".viewContent .centered-container").before('<div class="emojilist-div huifu-emoji"></div>');
+  createEmojiHtml(".viewContent .centered-container textarea.retextarea[name='content']");
+  $(".viewContent form .kuaisuhuifu").after('<div class="ubblist-div huifu-ubb"></div>');
+  createUbbHtml(".viewContent .centered-container textarea.retextarea[name='content']");
 }
 // 发帖/修改帖 增强
 function bookViewBetter() {
-  createToggleEle();
-
-  let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
-  if (window.location.pathname != "/bbs/book_view_add.aspx") {
-    contentHeader = $(".upload-container .form-group .content-header"); // 修改帖子
-  }
-  contentHeader.after('<div class="emojilist-div bookview-emoji"></div>');
-  createEmojiHtml(".upload-container .form-group [name='book_content']");
-  contentHeader.after('<div class="ubblist-div bookview-ubb"></div>');
-  createUbbHtml(".upload-container .form-group [name='book_content']");
+  const isBookViewMod = window.location.pathname == "/bbs/book_view_mod.aspx" ? true : false; // 修改帖子
 
   // 读取设置，当折叠时隐藏
   !getUserSetting("showBookViewEmoji") && $(".emojilist-div.bookview-emoji").hide();
   !getUserSetting("showBookViewUbb") && $(".ubblist-div.bookview-ubb").hide();
 
   // 生成按钮
-  function createToggleEle() {
-    const toggleEle = $(
-      `<span class="custom-toggle-btn view-ubb-btn" style="font-size:10px;margin-right:0;">${
-        getUserSetting("showBookViewUbb") ? "UBB 折叠" : "UBB 展开"
-      }</span>
-      <span class="custom-toggle-btn view-emoji-btn" style="font-size:10px;margin-left:0;">${
-        getUserSetting("showBookViewEmoji") ? "表情 折叠" : "表情 展开"
-      }</span>
-      `
-    );
-    if (window.location.pathname === "/bbs/book_view_mod.aspx") {
-      // 修改帖子
-      $("label").each(function () {
-        const labelContent = $(this).html();
-        if (labelContent == "内容") {
-          $(this).replaceWith(`
+  const toggleEle = $(`<span class="custom-toggle-btn view-ubb-btn" style="font-size:10px;margin-right:0;">
+      ${getUserSetting("showBookViewUbb") ? "UBB 折叠" : "UBB 展开"}</span>
+      <span class="custom-toggle-btn view-emoji-btn" style="font-size:10px;margin-left:0;">
+      ${getUserSetting("showBookViewEmoji") ? "表情 折叠" : "表情 展开"}</span>
+  `);
+
+  if (isBookViewMod) {
+    // 修改帖子
+    $("label").each(function() {
+      const labelContent = $(this).html();
+      if (labelContent == "内容") {
+        $(this).replaceWith(`
             <div class="content-header"><label>内容</label><div class="textarea-actions"></div>
           `);
-        }
-      });
-      $(".upload-container .form-group .textarea-actions").append(toggleEle);
-    } else {
-      // 发布帖子
-      $(".content .textarea-actions #saveDraftButton").before(toggleEle);
-    }
-    // ubb 展开按钮
-    $(".custom-toggle-btn.view-ubb-btn").click(function () {
-      $(".ubblist-div").toggle();
-      const showBookViewUbb = getUserSetting("showBookViewUbb");
-      if (showBookViewUbb) {
-        saveUserSetting("showBookViewUbb", false);
-        $(this).text("UBB 展开");
-      } else {
-        saveUserSetting("showBookViewUbb", true);
-        $(this).text("UBB 折叠");
       }
     });
-    // 表情展开按钮
-    $(".custom-toggle-btn.view-emoji-btn").click(function () {
-      $(".emojilist-div").toggle();
-      const showBookViewEmoji = getUserSetting("showBookViewEmoji");
-      if (showBookViewEmoji) {
-        saveUserSetting("showBookViewEmoji", false);
-        $(this).text("表情 展开");
-      } else {
-        saveUserSetting("showBookViewEmoji", true);
-        $(this).text("表情 折叠");
-      }
-    });
+    $(".upload-container .form-group .textarea-actions").append(toggleEle);
+  } else {
+    // 发布帖子
+    $(".content .textarea-actions #saveDraftButton").before(toggleEle);
   }
+  // ubb 展开按钮
+  $(".custom-toggle-btn.view-ubb-btn").click(function() {
+    $(".ubblist-div").toggle();
+    const showBookViewUbb = getUserSetting("showBookViewUbb");
+    if (showBookViewUbb) {
+      saveUserSetting("showBookViewUbb", false);
+      $(this).text("UBB 展开");
+    } else {
+      saveUserSetting("showBookViewUbb", true);
+      $(this).text("UBB 折叠");
+    }
+  });
+  // 表情展开按钮
+  $(".custom-toggle-btn.view-emoji-btn").click(function() {
+    $(".emojilist-div").toggle();
+    const showBookViewEmoji = getUserSetting("showBookViewEmoji");
+    if (showBookViewEmoji) {
+      saveUserSetting("showBookViewEmoji", false);
+      $(this).text("表情 展开");
+    } else {
+      saveUserSetting("showBookViewEmoji", true);
+      $(this).text("表情 折叠");
+    }
+  });
+
+  let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
+  if (isBookViewMod) contentHeader = $(".upload-container .form-group .content-header");
+  console.log('isBookViewMod:', isBookViewMod);
+  // 向页面内注入区域
+  contentHeader.after('<div class="emojilist-div bookview-emoji"></div>');
+  createEmojiHtml(".upload-container .form-group [name='book_content']");
+  contentHeader.after('<div class="ubblist-div bookview-ubb"></div>');
+  createUbbHtml(".upload-container .form-group [name='book_content']");
 }
 // ubb 节点
 function createUbbHtml(insertEle) {
   // 生成 ubb 按钮
   const ubbListHtml = [];
   ubbList.forEach((ubbItem) => {
-    const { name, upload } = ubbItem;
+    const {
+      name,
+      upload
+    } = ubbItem;
     let ubbSpanEle = null;
     if (upload?.type?.length > 0) {
       ubbSpanEle = $(`
@@ -1048,11 +1050,18 @@ function createUbbHtml(insertEle) {
   $(".ubblist-div").append(ubbListHtml);
   // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
   ubbList.forEach((ubbItem) => {
-    const { ubbType, name, inputTitle, ubbHandle, upload } = ubbItem;
+    const {
+      ubbType,
+      name,
+      inputTitle,
+      ubbHandle,
+      upload
+    } = ubbItem;
     $(`.ubblist-div .ubb-item:contains("${name}")`).click(() => {
       if (ubbType == "input") {
         // 输入域
-        showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubbHandle(inputResult), insertEle, true));
+        showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubbHandle(inputResult),
+          insertEle, true));
       } else if (ubbType == "jxVideo") {
         // 外链解析
         showInputPopup(inputTitle, (inputResult) => {
@@ -1105,7 +1114,7 @@ function createUbbHtml(insertEle) {
         // 文件选择回调事件
         $(`.ubblist-div #upload-${upload.type}`)
           .off("input")
-          .on("input", function () {
+          .on("input", function() {
             const fileInput = this;
             const tempFiles = this.files;
             if (tempFiles.length == 0) {
@@ -1134,7 +1143,11 @@ function createUbbHtml(insertEle) {
               const data = new FormData();
               data.append("image", file);
               uploadFiles(url, data, options, (response) => {
-                const { code, msg, data } = response;
+                const {
+                  code,
+                  msg,
+                  data
+                } = response;
                 if (code == 200) {
                   insetCustomContent(ubbHandle([data.url]), insertEle, true);
                   uploadCount.success++;
@@ -1144,7 +1157,8 @@ function createUbbHtml(insertEle) {
                 }
                 if (uploadCount.success + uploadCount.fail == tempFiles.length) {
                   $(".wait-box-overlay").remove(); // 关闭等待提示
-                  setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 300);
+                  setTimeout(() => notifyBox(
+                    `已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 300);
                   $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
                 }
               });
@@ -1156,7 +1170,7 @@ function createUbbHtml(insertEle) {
         // 文件选择回调事件
         $(`.ubblist-div #upload-${upload.type}`)
           .off("input")
-          .on("input", function () {
+          .on("input", function() {
             const fileInput = this;
             const tempFiles = this.files;
             if (tempFiles.length == 0) {
@@ -1178,7 +1192,7 @@ function createUbbHtml(insertEle) {
                 data: formData,
                 contentType: false,
                 processData: false,
-                success: function (res) {
+                success: function(res) {
                   console.log(res.data);
                 },
               });
@@ -1196,8 +1210,12 @@ function createEmojiHtml(insertEle) {
   const emojisPerRow = Math.floor(containerWidth / emojiWidth);
   const rowsPerPage = 5; // 每页显示5行
   const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量
-  let currentPage = 1; // 当前页码
+  // 获取缓存的页码
+  const cacheKey = insertEle.includes("book_content") ? "bookview_emoji_page" : "huifu_emoji_page";
+  let currentPage = parseInt(localStorage.getItem(cacheKey)) || 1; // 当前页码
   const totalPages = Math.ceil(emojiList.length / pageSize); // 总页数
+  // 确保页码在有效范围内
+  currentPage = Math.min(Math.max(currentPage, 1), totalPages);
 
   function loadEmojis(page) {
     const start = (page - 1) * pageSize;
@@ -1216,9 +1234,10 @@ function createEmojiHtml(insertEle) {
 
     // 清空内容并添加新表情
     $(".emojilist-div").empty().append(emojiListHtml);
-
     // 更新分页按钮
     updatePaginationButtons();
+    // 缓存当前页码
+    localStorage.setItem(cacheKey, page);
   }
 
   // 创建分页按钮
@@ -1262,7 +1281,6 @@ function createEmojiHtml(insertEle) {
     paginationDiv.append(prevBtn, pageInfo, nextBtn);
     $(".emojilist-div").after(paginationDiv);
   }
-
   // 更新分页按钮状态
   function updatePaginationButtons() {
     const pageInfo = $(".emoji-page-info");
@@ -1271,15 +1289,17 @@ function createEmojiHtml(insertEle) {
     const prevBtn = $(".emoji-page-btn:contains('上一页')");
     const nextBtn = $(".emoji-page-btn:contains('下一页')");
 
+    // 修复按钮颜色逻辑
     prevBtn.css("color", currentPage <= 1 ? "#999" : "#1ABCAF");
     nextBtn.css("color", currentPage >= totalPages ? "#999" : "#1ABCAF");
   }
 
   // 初始化
-  loadEmojis(1);
+  loadEmojis(currentPage);
   createPaginationButtons();
+  updatePaginationButtons(); // 确保初始化时按钮颜色正确
 
-  // 监听表情区域显示状态变化
+  // 监听表情区域显示状态变化，让页码显示区域跟随显示/隐藏
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === "attributes" && mutation.attributeName === "style") {
@@ -1288,7 +1308,6 @@ function createEmojiHtml(insertEle) {
       }
     });
   });
-
   observer.observe($(".emojilist-div")[0], {
     attributes: true,
   });
@@ -1297,11 +1316,11 @@ function createEmojiHtml(insertEle) {
 function changeImgSize() {
   const imgThumbWidth = getUserSetting("imgThumbWidth"); // 读取用户设置缩放值
   // 监测已有图片
-  $("body img").each(function () {
+  $("body img").each(function() {
     if (this.complete) {
       handleImageLoad(this); // 如果图片已经加载完成
     } else {
-      $(this).on("load", function () {
+      $(this).on("load", function() {
         handleImageLoad(this);
       });
     }
@@ -1348,7 +1367,7 @@ function changeImgSize() {
     });
   }
 
-  $("body").on("click", "img", function (e) {
+  $("body").on("click", "img", function(e) {
     if (!imgThumbWidth) return; // 防止设置为 0 时依旧添加点击事件，导致点击后页面内图片丢失
 
     e.preventDefault(); // 取消默认点击行为，避免进入预览窗口
@@ -1377,7 +1396,7 @@ function huifuCopy() {
   const customLayoutEnabled = JSON.parse(localStorage.getItem("customLayoutEnabled"));
   if (customLayoutEnabled) {
     // 新版回帖
-    $(".forum-post .post-content .retext").each(function () {
+    $(".forum-post .post-content .retext").each(function() {
       const spanEle = $("<span class='huifu-copy'>+1</span>");
       $(this).append(spanEle);
       spanEle.click((e) => {
@@ -1392,7 +1411,7 @@ function huifuCopy() {
     });
   } else {
     // 旧版回帖
-    $(".reline.list-reply .retext").each(function () {
+    $(".reline.list-reply .retext").each(function() {
       const spanEle = $("<span class='huifu-copy'>+1</span>");
       $(this).append(spanEle);
       spanEle.click((e) => {
@@ -1505,7 +1524,8 @@ async function chuiniuHistory() {
       let historyPage = 1; // 翻页，达到预设值时停止
 
       const historyText = await getPageContent(`/games/chuiniu/book_list.aspx?type=0&touserid=${toUserId}`);
-      const userHistoryTotal = historyText.slice(historyText.indexOf("页，共 ") + 4, historyText.indexOf(" 条")); // 吹牛历史总条数
+      const userHistoryTotal = historyText.slice(historyText.indexOf("页，共 ") + 4, historyText.indexOf(
+        " 条")); // 吹牛历史总条数
 
       const getQueUserHistoryid = async () => {
         const tempElements = $(historyText).filter(".line1, .line2");
@@ -1546,14 +1566,16 @@ function addTopAndDown() {
     }
   }
 
-  let el = navigator.userAgent.indexOf("Firefox") != -1 || navigator.userAgent.indexOf("MSIE") != -1 ? document.documentElement : document.body,
+  let el = navigator.userAgent.indexOf("Firefox") != -1 || navigator.userAgent.indexOf("MSIE") != -1 ? document
+    .documentElement : document.body,
     t1,
     t2,
     speed_by_click = 200,
     zIindex = 1001;
 
   function getDocumentHeight() {
-    return document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight : document.body.offsetHeight;
+    return document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight : document.body
+      .offsetHeight;
   }
 
   function get_scroll(a) {
@@ -1567,12 +1589,12 @@ function addTopAndDown() {
 
   function scrollTo(element, to, duration) {
     (start = document.documentElement.scrollTop || document.body.scrollTop),
-      (change = to - start),
-      (currentTime = 0),
-      (increment = 20),
-      (newDuration = typeof duration === "undefined" ? 500 : duration);
+    (change = to - start),
+    (currentTime = 0),
+    (increment = 20),
+    (newDuration = typeof duration === "undefined" ? 500 : duration);
 
-    let animateScroll = function () {
+    let animateScroll = function() {
       currentTime += increment;
       let val = Math.easeInOutQuad(currentTime, start, change, newDuration);
       window.scrollTo(0, val);
@@ -1583,7 +1605,7 @@ function addTopAndDown() {
     animateScroll();
   }
 
-  Math.easeInOutQuad = function (t, b, c, d) {
+  Math.easeInOutQuad = function(t, b, c, d) {
     t /= d / 2;
     if (t < 1) return (c / 2) * t * t + b;
     t--;
@@ -1644,34 +1666,34 @@ function addTopAndDown() {
 
       up.addEventListener(
         "mouseout",
-        function () {
+        function() {
           clearTimeout(t1);
         },
         false
       );
       dn.addEventListener(
         "mouseout",
-        function () {
+        function() {
           clearTimeout(t2);
         },
         false
       );
       up.addEventListener(
         "click",
-        function () {
+        function() {
           scrollTo(el, 0, speed_by_click);
         },
         false
       );
       dn.addEventListener(
         "click",
-        function () {
+        function() {
           scrollTo(el, getDocumentHeight(), speed_by_click);
         },
         false
       );
 
-      window.onscroll = function () {
+      window.onscroll = function() {
         let scrolled = document.documentElement.scrollTop,
           diffHeight = document.body.scrollHeight - window.innerHeight;
         up.style.display = scrolled > 0 ? "" : "none";
@@ -1968,7 +1990,7 @@ function createScriptSetting() {
     // 监听下拉选择，改变其他元素状态
     $('form[name="settingForm"]')
       .find("select")
-      .on("change", function () {
+      .on("change", function() {
         const selectName = $(this).attr("name");
         const selectedValue = $(this).val();
 
@@ -2005,7 +2027,7 @@ function createScriptSetting() {
       const formData = {};
       $('form[name="settingForm"]')
         .find("input, select")
-        .each(function () {
+        .each(function() {
           // 根据不同输入方式格式化值，否则全部为字符串
           if ($(this).is(":checkbox")) {
             formData[this.name] = this.checked;
@@ -2029,7 +2051,8 @@ function createScriptSetting() {
       for (const key of Object.keys(formData)) {
         cacheSetting[key] = formData[key];
       }
-      console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;", cacheSetting);
+      console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;",
+        cacheSetting);
       try {
         localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(cacheSetting));
         notifyBox("保存成功");
@@ -2221,7 +2244,7 @@ function uploadFiles(url, data, options = {}, callback, type = "POST") {
 function showInputPopup(inputTitle, callback) {
   // 创建蒙版
   const mask = $('<div class="input-popup-mask"></div>');
-  mask.click(function (event) {
+  mask.click(function(event) {
     if (event.target === mask[0]) {
       mask.remove();
       callback(null);
@@ -2233,8 +2256,8 @@ function showInputPopup(inputTitle, callback) {
   for (let i = 0; i < inputTitle.length; i++) {
     const inputBox = $(
       '<div class="input-popup-input"><label class="input-popup-label">' +
-        inputTitle[i] +
-        '：</label><textarea class="input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
+      inputTitle[i] +
+      '：</label><textarea class="input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
     );
     popup.append(inputBox);
   }
@@ -2242,16 +2265,16 @@ function showInputPopup(inputTitle, callback) {
   const buttonsContainer = $('<div class="input-popup-buttons"></div>');
   // 创建取消按钮
   const cancelBtn = $('<button class="input-popup-cancel-btn">取消</button>');
-  cancelBtn.click(function () {
+  cancelBtn.click(function() {
     mask.remove();
     callback(null);
   });
   // 创建确定按钮
   const submitBtn = $('<button class="input-popup-submit-btn">确定</button>');
-  submitBtn.click(function () {
+  submitBtn.click(function() {
     const inputs = $(".input-popup-textarea");
     const inputValues = [];
-    inputs.each(function () {
+    inputs.each(function() {
       inputValues.push($(this).val());
     });
     mask.remove();
@@ -2290,8 +2313,7 @@ function scrollToEle(toEle, animateTime = 500) {
   const elementOffset = targetElement.offset().top; // 获取目标元素相对于文档顶部的偏移量
   const offset = elementOffset - windowHeight / 2; // 计算滚动的偏移量
 
-  $("html, body").animate(
-    {
+  $("html, body").animate({
       scrollTop: offset,
     },
     animateTime
@@ -2337,7 +2359,7 @@ function generateRandomString(length) {
  * @param {*} timeLimit 连续点击限制时间，单位/s
  */
 function clickCounter(clickEle, callback, clickLimit = 3, timeLimit = 1) {
-  $(clickEle).on("click", function () {
+  $(clickEle).on("click", function() {
     let $button = $(this);
     let clickCount = $button.data("clickCount") || 0; // 获取点击次数，如果不存在则默认为0
     clickCount++; // 点击次数加1
@@ -2347,7 +2369,7 @@ function clickCounter(clickEle, callback, clickLimit = 3, timeLimit = 1) {
       // 如果是第一次点击
       $button.data(
         "timeout",
-        setTimeout(function () {
+        setTimeout(function() {
           $button.removeData("clickCount"); // 超时后移除点击次数数据
         }, timeLimit * 1000)
       ); // 设置时间窗口，单位为毫秒
@@ -2364,7 +2386,8 @@ function addCustomStyle() {
   // console.log("%c ===> [ 添加自定义样式 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
   $("<style>").text(customCSS).appendTo("head");
 
-  $("head").append(`<style>.img-thumb{max-width:${getUserSetting("imgThumbWidth")}px;display: block;}`); // 将图片缩小样式添加到页面中
+  $("head").append(
+    `<style>.img-thumb{max-width:${getUserSetting("imgThumbWidth")}px;display: block;}`); // 将图片缩小样式添加到页面中
 }
 /**
  * 防抖
@@ -2376,7 +2399,7 @@ function debounce(func, delay = 800) {
   console.log("%c ===> [ 节流函数开始运行 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
   let timeoutId;
 
-  return function () {
+  return function() {
     clearTimeout(timeoutId);
 
     timeoutId = setTimeout(() => {
@@ -2396,7 +2419,8 @@ function insetCustomContent(content, targetEle, autoFocus = false) {
   if (autoFocus) {
     const cursorPosition = textarea[0].selectionStart; // 获取当前光标位置
     const currentValue = textarea.val(); // 当前内容
-    const newValue = currentValue.slice(0, cursorPosition) + content + currentValue.slice(cursorPosition); // 将内容插入当前光标处。如果未选择输入框则插入最后
+    const newValue = currentValue.slice(0, cursorPosition) + content + currentValue.slice(
+      cursorPosition); // 将内容插入当前光标处。如果未选择输入框则插入最后
     textarea.val(newValue); // 写入完整内容
     // 将光标移到插入内容的最后
     textarea[0].selectionStart = cursorPosition + content.length;
@@ -2492,7 +2516,7 @@ function showWaitBox(msg) {
   modal.append(`<span class="wait-box-text">${msg}</span>`);
   overlay.append(modal);
   $("body").append(overlay);
-  overlay.on("click", function (e) {
+  overlay.on("click", function(e) {
     e.stopPropagation();
   });
   return overlay;
@@ -2539,7 +2563,7 @@ function notifyBox(message, status = true, delayTime = 1500) {
   messageDiv
     .fadeIn()
     .delay(delayTime)
-    .fadeOut(function () {
+    .fadeOut(function() {
       containerDiv.remove();
       offsetY -= 50; // 删除后减少50px的垂直偏移量
     });
