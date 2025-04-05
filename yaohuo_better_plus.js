@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.7.0
+// @version         1.7.1
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.7.0", // 脚本版本
+  version: "1.7.1", // 脚本版本
   checkVersion: true, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
@@ -918,10 +918,6 @@ function huifuBetter() {
   $(".viewContent .ulselect").remove();
   $(".viewContent .emoticon-popup").remove();
 
-
-  !getUserSetting("showHuifuEmoji") && $(".emojilist-div.huifu-emoji").hide();
-  !getUserSetting("showHuifuUbb") && $(".ubblist-div.huifu-ubb").hide();
-
   const toggleEle = $(
     `<span class="custom-toggle-btn huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`
   );
@@ -962,14 +958,13 @@ function huifuBetter() {
   createEmojiHtml(".viewContent .centered-container textarea.retextarea[name='content']");
   $(".viewContent form .kuaisuhuifu").after('<div class="ubblist-div huifu-ubb"></div>');
   createUbbHtml(".viewContent .centered-container textarea.retextarea[name='content']");
+
+  !getUserSetting("showHuifuEmoji") && $(".emojilist-div.huifu-emoji").hide();
+  !getUserSetting("showHuifuUbb") && $(".ubblist-div.huifu-ubb").hide();
 }
 // 发帖/修改帖 增强
 function bookViewBetter() {
-  const isBookViewMod = window.location.pathname == "/bbs/book_view_mod.aspx" ? true : false; // 修改帖子
-
-  // 读取设置，当折叠时隐藏
-  !getUserSetting("showBookViewEmoji") && $(".emojilist-div.bookview-emoji").hide();
-  !getUserSetting("showBookViewUbb") && $(".ubblist-div.bookview-ubb").hide();
+  const isBookViewMod = window.location.pathname == "/bbs/book_view_mod.aspx" ? true : false; // 判断是否是修改帖子页面
 
   // 生成按钮
   const toggleEle = $(`<span class="custom-toggle-btn view-ubb-btn" style="font-size:10px;margin-right:0;">
@@ -1026,6 +1021,11 @@ function bookViewBetter() {
   createEmojiHtml(".upload-container .form-group [name='book_content']");
   contentHeader.after('<div class="ubblist-div bookview-ubb"></div>');
   createUbbHtml(".upload-container .form-group [name='book_content']");
+
+
+  // 读取设置，当折叠时隐藏
+  !getUserSetting("showBookViewEmoji") && $(".emojilist-div.bookview-emoji").hide();
+  !getUserSetting("showBookViewUbb") && $(".ubblist-div.bookview-ubb").hide();
 }
 // ubb 节点
 function createUbbHtml(insertEle) {
