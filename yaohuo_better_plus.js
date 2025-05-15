@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.7.1", // 脚本版本
+  version: "1.7.3", // 脚本版本
   checkVersion: true, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
@@ -51,6 +51,7 @@ const defaultSetting = {
   imgUploadApiUrl: ["https://aapi.helioho.st/upload.php", "https://img.ink/api/upload"],
   imgUploadSelOpt: 0, // 使用图床
   suimoToken: "", // 水墨图床 token
+  textareaAutoFocus: true, // 输入框自动获取焦点
 
   showMoreSetting: true, // 高级设置
   oneClickCollectMoney: false, // 一键吃肉
@@ -925,10 +926,10 @@ function huifuBetter() {
   $(".viewContent .ulselect").remove();
   $(".viewContent .emoticon-popup").remove();
 
-  const toggleEle = $(
+  const ubbToggleEle = $(
     `<span class="v2jun-custom-toggle-btn v2jun-huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`
   );
-  toggleEle.click(function () {
+  ubbToggleEle.click(function () {
     $(".v2jun-ubblist-div").toggle();
     const showHuifuUbb = getUserSetting("showHuifuUbb");
     if (showHuifuUbb) {
@@ -939,17 +940,14 @@ function huifuBetter() {
       $(this).text("UBB 折叠");
     }
   });
-  $(".viewContent .kuaisuhuifu").append(toggleEle);
+  $(".viewContent .kuaisuhuifu").append(ubbToggleEle);
 
-  const vSpan = $(
+  const emojiToggleEle = $(
     `<span class='v2jun-custom-toggle-btn v2jun-huifu-emoji-toggle'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`
   );
-  vSpan.css({
-    "margin-left": "10px",
-    "padding": "2px 10px",
-  });
-  vSpan.insertBefore(".viewContent .tongzhi");
-  vSpan.click(function () {
+  emojiToggleEle.css({ "margin-left": "10px", "padding": "2px 10px" });
+  emojiToggleEle.insertBefore(".viewContent .tongzhi");
+  emojiToggleEle.click(function () {
     $(".v2jun-emojilist-div").toggle();
     const showHuifuEmoji = getUserSetting("showHuifuEmoji");
     if (showHuifuEmoji) {
@@ -966,8 +964,8 @@ function huifuBetter() {
   $(".viewContent form .kuaisuhuifu").after('<div class="v2jun-ubblist-div v2jun-huifu-ubb"></div>');
   createUbbHtml(".viewContent .centered-container textarea.retextarea[name='content']");
 
-  !getUserSetting("showHuifuEmoji") && $(".v2jun-emojilist-div.v2jun-huifu-emoji").hide();
-  !getUserSetting("showHuifuUbb") && $(".v2jun-ubblist-div.v2jun-huifu-ubb").hide();
+  !getUserSetting("showHuifuEmoji") && $(".v2jun-emojilist-div.v2jun-huifu-emoji").css("display", "none");
+  !getUserSetting("showHuifuUbb") && $(".v2jun-ubblist-div.v2jun-huifu-ubb").css("display", "none");
 }
 // 发帖/修改帖 增强
 function bookViewBetter() {
@@ -1031,8 +1029,8 @@ function bookViewBetter() {
 
 
   // 读取设置，当折叠时隐藏
-  !getUserSetting("showBookViewEmoji") && $(".v2jun-emojilist-div.bookview-emoji").hide();
-  !getUserSetting("showBookViewUbb") && $(".v2jun-ubblist-div.bookview-ubb").hide();
+  !getUserSetting("showBookViewEmoji") && $(".v2jun-emojilist-div.bookview-emoji").css("display", "none");
+  !getUserSetting("showBookViewUbb") && $(".v2jun-ubblist-div.bookview-ubb").css("display", "none");
 }
 // ubb 节点
 function createUbbHtml(insertEle) {
@@ -1067,8 +1065,7 @@ function createUbbHtml(insertEle) {
     $(`.v2jun-ubblist-div .v2jun-ubb-item:contains("${name}")`).click(() => {
       if (ubbType == "input") {
         // 输入域
-        showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubbHandle(inputResult),
-          insertEle, true));
+        showInputPopup(inputTitle, (inputResult) => inputResult && insetCustomContent(ubbHandle(inputResult), insertEle));
       } else if (ubbType == "jxVideo") {
         // 外链解析
         showInputPopup(inputTitle, (inputResult) => {
@@ -1087,7 +1084,7 @@ function createUbbHtml(insertEle) {
           getVideoPlayUrl(match[0], (videoUrl) => {
             if (!videoUrl) return;
 
-            insetCustomContent(ubbHandle(videoUrl), insertEle, true);
+            insetCustomContent(ubbHandle(videoUrl), insertEle);
             $(".v2jun-wait-box-overlay").remove();
             notifyBox("解析成功~");
           });
@@ -1110,7 +1107,7 @@ function createUbbHtml(insertEle) {
           getZbPlayUrl(match[0], (zbUrl) => {
             if (!zbUrl) return;
 
-            insetCustomContent(ubbHandle(zbUrl), insertEle, true);
+            insetCustomContent(ubbHandle(zbUrl), insertEle);
             $(".v2jun-wait-box-overlay").remove();
             notifyBox("解析成功~");
           });
@@ -1169,7 +1166,7 @@ function createUbbHtml(insertEle) {
                   const { code, msg, data } = res;
                   if (code == 200) {
                     uploadCount.success++;
-                    insetCustomContent(ubbHandle([data.url]), insertEle, true);
+                    insetCustomContent(ubbHandle([data.url]), insertEle);
                   } else {
                     uploadCount.fail++;
                     notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
@@ -1222,9 +1219,8 @@ function createEmojiHtml(insertEle) {
   const emojiWidth = 50; // 表情宽度(包含间距)
   const emojisPerRow = Math.floor(containerWidth / emojiWidth);
   const rowsPerPage = 5; // 每页显示5行
-  const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量
-  // 获取缓存的页码
-  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting('bookviewEmojiPage') : getUserSetting('huifuEmojiPage')); // 当前页码
+  const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量  
+  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting('bookviewEmojiPage') : getUserSetting('huifuEmojiPage'));// 获取缓存的页码
   const totalPages = Math.ceil(emojiList.length / pageSize); // 总页数
   // 确保页码在有效范围内
   currentPage = Math.min(Math.max(currentPage, 1), totalPages);
@@ -1240,7 +1236,7 @@ function createEmojiHtml(insertEle) {
         class: "v2jun-emojilist-img",
         src: faceitem,
       });
-      $(img).click(() => insetCustomContent(`[img]${faceitem}[/img]`, insertEle, true));
+      $(img).click(() => insetCustomContent(`[img]${faceitem}[/img]`, insertEle));
       emojiListHtml.push(img);
     });
 
@@ -1476,7 +1472,7 @@ function speedEatMoney() {
           "先吃肉",
         ];
         const index = Math.floor(Math.random() * eatWordsArr.length);
-        insetCustomContent(eatWordsArr[index], ".centered-container .retextarea");
+        insetCustomContent(eatWordsArr[index], ".centered-container .retextarea", true);
         setTimeout(() => {
           $(".kuaisuhuifu input").trigger("click");
         }, 300);
@@ -1929,6 +1925,19 @@ function createScriptSetting() {
               </label>
             </div>
           </li>
+          <li class="setting-li-between">
+            <span>输入框自动聚焦</span>
+            <div class="v2jun-switch">
+              <input name="textareaAutoFocus" value="true" ${getUserSetting("textareaAutoFocus") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
+              <label class="switch-label" for="textareaAutoFocus">
+                <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
+                <span class="v2jun-switch-handle"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-tips">开启后在输入框光标位置插入内容，关闭则追加到末尾</li>
+
 
           <li class="v2jun-setting-li-title more-setting more-setting-click" style="margin-bottom:0;"><hr><b>高级设置</b><hr></li>
           <li class="more-setting" style="font-size:12px;text-align:center;margin:-16px 0;color:red;">使用以下功能前请先熟读并背诵版规(手动狗头.jpg)</li>
@@ -1994,7 +2003,7 @@ function createScriptSetting() {
         const selectedValue = $(this).val();
 
         if (selectName === "imgUploadSelOpt") {
-          if (selectedValue == 0) $(".v2jun-setting-div .sel-suimo").hide();
+          if (selectedValue == 0) $(".v2jun-setting-div .sel-suimo").css("display", "none");
           else if (selectedValue == 1) $(".v2jun-setting-div .sel-suimo").show();
         }
       });
@@ -2064,7 +2073,7 @@ function createScriptSetting() {
       }, 300);
     });
     // 根据用户设置决定是否显示水墨图床 token 设置
-    if (getUserSetting("imgUploadSelOpt") != 1) $(".v2jun-setting-div .sel-suimo").hide();
+    if (getUserSetting("imgUploadSelOpt") != 1) $(".v2jun-setting-div .sel-suimo").css("display", "none");
   }
   // 设置 icon
   function createIcon() {
@@ -2415,14 +2424,14 @@ function debounce(func, delay = 800) {
  * 在指定textarea/input当前光标处插入内容
  * @param {*} content 插入内容
  * @param {String} targetEle 插入目标 element(jquery可使用的选择器)
- * @param {Boolean} autoFocus 是否自动获取输入焦点
+ * @param {Boolean} notFocus 忽略用户设置，强行不聚焦
  */
-function insetCustomContent(content, targetEle, autoFocus = false) {
+function insetCustomContent(content, targetEle, notFocus = false) {
   const textarea = $(targetEle); // 获取目标元素
-  if (autoFocus) {
+  const textareaContent = textarea.val(); // 获取当前内容
+  if (getUserSetting('textareaAutoFocus') && !notFocus) {
     const cursorPosition = textarea[0].selectionStart; // 获取当前光标位置
-    const currentValue = textarea.val(); // 当前内容
-    const newValue = currentValue.slice(0, cursorPosition) + content + currentValue.slice(
+    const newValue = textareaContent.slice(0, cursorPosition) + content + textareaContent.slice(
       cursorPosition); // 将内容插入当前光标处。如果未选择输入框则插入最后
     textarea.val(newValue); // 写入完整内容
     // 将光标移到插入内容的最后
@@ -2431,15 +2440,15 @@ function insetCustomContent(content, targetEle, autoFocus = false) {
     textarea.focus();
 
     getUserSetting("autoCloseBookViewUbb") &&
-      $(".v2jun-emojilist-div.bookview-emoji").hide() &&
+      $(".v2jun-emojilist-div.bookview-emoji").css("display", "none") &&
       $(".v2jun-custom-toggle-btn.view-emoji-toggle").text("表情 展开") &&
       saveUserSetting("showBookViewEmoji", false);
     getUserSetting("autoCloseHuifuEmoji") &&
-      $(".v2jun-emojilist-div.v2jun-huifu-emoji").hide() &&
+      $(".v2jun-emojilist-div.v2jun-huifu-emoji").css("display", "none") &&
       $(".v2jun-custom-toggle-btn.v2jun-huifu-emoji-toggle").text("表情 展开") &&
       saveUserSetting("showHuifuEmoji", false);
   } else {
-    textarea.val(content);
+    textarea.val(textareaContent + content); // 追加到文本末尾
   }
 }
 
