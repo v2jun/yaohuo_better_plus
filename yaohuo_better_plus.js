@@ -659,7 +659,7 @@ const ubbList = [{
 {
   ubbType: "uploadImg",
   name: "图片(上传)",
-  ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]`,
+  ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]\n`,
   upload: {
     type: "img",
     accept: "image/*",
@@ -756,19 +756,18 @@ const settingIconBase64 =
     createScriptSetting();
     userSetting["showTopAndDownBtn"] && addTopAndDown();
     userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
-    userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, speedEatMoney, true);
-    userSetting["hideXunzhang"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, hideXunzhang, true);
-    userSetting["showHuifuCopy"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, huifuCopy, true);
-    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx$/i, bookViewBetter, true);
-    executeFunctionForURL(/^\/bbs-.*\.html$/i, huifuBetter, true);
+    userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, speedEatMoney);
+    userSetting["hideXunzhang"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, hideXunzhang);
+    userSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
+    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx(\?.*)?$/i, bookViewBetter);
+    executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuBetter);
     userSetting["useRight"] && executeFunctionForURL("/bbs/book_list.aspx", useRightNextBtn);
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
-    executeFunctionForURL(/^\/bbs-.*\.html$/i, changeImgSize, true);
+    executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, changeImgSize);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
-    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^\/bbs-.*\.html$/i, autoLoadMoreHuifuList,
-      true);
+    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
   });
 
@@ -1125,21 +1124,26 @@ function createUbbHtml(insertEle) {
           .on("input", function () {
             const fileInput = this;
             const tempFiles = this.files;
-            if (tempFiles.length == 0) {
-              notifyBox("请选择文件", false);
+            if (!tempFiles || tempFiles.length === 0) {
+              notifyBox("请选择图片", false);
               return;
             }
             if (tempFiles.length > 10) {
-              notifyBox("一次最多选择 10 个文件", false);
+              notifyBox("一次最多选择 10 张图片", false);
               return;
             }
+            if (tempFiles.length >= 2) showWaitBox("上传中…"); // 上传等待提示
 
-            showWaitBox("上传中…"); // 上传等待提示
-            const uploadCount = {
-              success: 0,
-              fail: 0,
-            }; // 存储上传结果数量
-            for (const file of tempFiles) {
+            let uploadCount = { currentIndex: 0, success: 0, fail: 0, }; // 存储上传结果数量
+            const uploadNextImage = () => {
+              if (uploadCount.currentIndex >= tempFiles.length) {
+                // 所有图片上传完成
+                $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
+                setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 500);
+                $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
+                return;
+              }
+
               const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
               const options = {};
               if (getUserSetting("imgUploadSelOpt") == 1) {
@@ -1148,29 +1152,42 @@ function createUbbHtml(insertEle) {
                   token: getUserSetting("suimoToken"),
                 };
               }
+              const currentImg = tempFiles[uploadCount.currentIndex];
+              // 检查文件大小是否超过20MB
+              if (currentImg.size > 20 * 1024 * 1024) {
+                notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片文件过大，已跳过`, false, 300);
+                uploadCount.fail++;
+                uploadCount.currentIndex++;
+                uploadNextImage();
+                return;
+              }
               const data = new FormData();
-              data.append("image", file);
-              uploadFiles(url, data, options, (response) => {
-                const {
-                  code,
-                  msg,
-                  data
-                } = response;
-                if (code == 200) {
-                  insetCustomContent(ubbHandle([data.url]), insertEle, true);
-                  uploadCount.success++;
-                } else {
+              data.append("image", currentImg);
+              uploadFiles({
+                url, data, options,
+                success: (res) => {
+                  const { code, msg, data } = res;
+                  if (code == 200) {
+                    uploadCount.success++;
+                    insetCustomContent(ubbHandle([data.url]), insertEle, true);
+                  } else {
+                    uploadCount.fail++;
+                    notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
+                  }
+                  // 继续上传下一张
+                  uploadCount.currentIndex++;
+                  uploadNextImage();
+                },
+                error: (err) => {
+                  notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
+                  uploadCount.currentIndex++;
                   uploadCount.fail++;
-                  // notifyBox(msg, false);
-                }
-                if (uploadCount.success + uploadCount.fail == tempFiles.length) {
-                  $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
-                  setTimeout(() => notifyBox(
-                    `已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 300);
-                  $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
+                  uploadNextImage();
                 }
               });
-            }
+            };
+            // 开始上传第一张图片
+            uploadNextImage();
           });
       } else if (ubbType == "uploadFile") {
         // 点击隐藏的上传选择文件按钮
@@ -1191,19 +1208,7 @@ function createUbbHtml(insertEle) {
             }
 
             for (const file of tempFiles) {
-              const formData = new FormData();
-              formData.append("file", file);
-              formData.append("step", 1);
-              $.ajax({
-                url: "https://www.uhsea.com",
-                type: "post",
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function (res) {
-                  console.log(res.data);
-                },
-              });
+
             }
           });
       }
@@ -2211,26 +2216,30 @@ async function getVideoPlayUrl(url, callback) {
 /**
  * 上传文件到指定api
  * @param {*} url api地址
- * @param {*} data 数据
- * @param {*} options 附加请求数据
- * @param {*} callback 回调函数
  * @param {*} type 请求方法
+ * @param {*} data 上传文件数据
+ * @param {*} success 成功回调
+ * @param {*} error 失败回调
+ * @param {*} options 其他参数
  */
-function uploadFiles(url, data, options = {}, callback, type = "POST") {
+function uploadFiles({
+  url,
+  type = "POST",
+  data,
+  success = () => { },
+  error = () => { },
+  options = {},
+} = {}) {
   $.ajax({
     url,
     type,
     data,
     contentType: false,
     processData: false,
-    dataType: "json", // 期望返回的数据格式
+    dataType: "json",
     ...options,
-    success: (response) => {
-      callback(response);
-    },
-    error: (error) => {
-      console.error("未知错误，上传失败", error);
-    },
+    success,
+    error
   });
 }
 
@@ -2438,16 +2447,16 @@ function insetCustomContent(content, targetEle, autoFocus = false) {
  * 当前页面为指定 url 时执行函数
  * @param {*} targetPath 指定 url，可为正则表达式
  * @param {Function} executeFunction 执行函数
- * @param {Boolean} isRegex 是否使用正则判断 url
  */
-function executeFunctionForURL(targetPath, executeFunction, isRegex = false) {
-  if (isRegex) {
-    targetPath.test(window.location.pathname) && executeFunction();
+function executeFunctionForURL(targetPath, executeFunction) {
+  if (!targetPath || targetPath.length === 0) throw new Error("传入路径无效！");
+  if (typeof executeFunction !== "function") throw new Error("传入函数无效！");
+
+  const currentPath = window.location.pathname + window.location.search;
+  if (targetPath instanceof RegExp) {
+    targetPath.test(currentPath) && executeFunction();
   } else {
-    if (typeof targetPath !== "string" || typeof executeFunction !== "function") {
-      throw new Error("参数无效！");
-    }
-    window.location.pathname === targetPath && executeFunction();
+    currentPath.includes(targetPath) && executeFunction();
   }
 }
 
