@@ -195,8 +195,11 @@ const customCSS = `
     right: 0px;
   }
   /* 复读机按钮 样式 */
-  .huifu-copy{
-    padding:5px 10px;
+  .v2jun-huifu-copy{
+    display: inline-block;
+    height:22px;
+    line-height:22px;
+    padding:0 10px;
     text-align:center;
     color:#fff;
     margin-left:20px;
@@ -757,18 +760,18 @@ const settingIconBase64 =
     createScriptSetting();
     userSetting["showTopAndDownBtn"] && addTopAndDown();
     userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
-    userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, speedEatMoney);
-    userSetting["hideXunzhang"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, hideXunzhang);
-    userSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
+    userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, speedEatMoney);
+    userSetting["hideXunzhang"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, hideXunzhang);
+    userSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
     executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx(\?.*)?$/i, bookViewBetter);
-    executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuBetter);
-    userSetting["useRight"] && executeFunctionForURL("/bbs/book_list.aspx", useRightNextBtn);
+    executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuBetter);
+    userSetting["useRight"] && useRightNextBtn();
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
-    executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, changeImgSize);
+    executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, changeImgSize);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
-    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^(\/bbs-.*\.html|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
+    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
   });
 
@@ -906,17 +909,14 @@ function autoLoadMoreBookList() {
     }
   });
 }
-// 帖子页面上一页，下一页按钮互换位置
+// 上一页，下一页按钮互换位置
 function useRightNextBtn() {
-  // 获取上一页和下一页的按钮
-  const prevLink = $('.btBox .bt2 a:contains("上一页")');
-  const nextLink = $('.btBox .bt2 a:contains("下一页")');
-
-  // 交换位置
-  prevLink.after(nextLink.clone());
-  nextLink.after(prevLink.clone());
-  prevLink.remove();
-  nextLink.remove();
+  const btBox = $('.btBox .bt2');
+  if (!btBox.length) return;
+  const links = btBox.children('a');
+  if (links.length !== 2) return;
+  // 直接修改按钮的顺序
+  btBox.append(links.get().reverse());
 }
 // 回帖 增强
 function huifuBetter() {
@@ -1129,14 +1129,16 @@ function createUbbHtml(insertEle) {
               notifyBox("一次最多选择 10 张图片", false);
               return;
             }
-            if (tempFiles.length >= 2) showWaitBox("上传中…"); // 上传等待提示
 
+            showWaitBox("上传中…"); // 上传等待提示
             let uploadCount = { currentIndex: 0, success: 0, fail: 0, }; // 存储上传结果数量
             const uploadNextImage = () => {
               if (uploadCount.currentIndex >= tempFiles.length) {
                 // 所有图片上传完成
-                $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
-                setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 500);
+                setTimeout(() => {
+                  $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
+                }, 1000);
+                setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 1500);
                 $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
                 return;
               }
@@ -1167,6 +1169,8 @@ function createUbbHtml(insertEle) {
                   if (code == 200) {
                     uploadCount.success++;
                     insetCustomContent(ubbHandle([data.url]), insertEle);
+
+                    if (tempFiles.length > 1) { notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片已上传成功`, true, 200); }
                   } else {
                     uploadCount.fail++;
                     notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
@@ -1401,16 +1405,16 @@ function changeImgSize() {
 }
 // 复读机(回帖+1)
 function huifuCopy() {
-  const customLayoutEnabled = JSON.parse(localStorage.getItem("customLayoutEnabled"));
-  if (customLayoutEnabled) {
+  const isNewHuifu = $(".recontent .forum-post .admin-actions").length > 0;
+  if (isNewHuifu) {
     // 新版回帖
-    $(".forum-post .post-content .retext").each(function () {
-      const spanEle = $("<span class='huifu-copy'>+1</span>");
-      $(this).append(spanEle);
-      spanEle.click((e) => {
+    $(".recontent .forum-post .admin-actions").each(function () {
+      const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
+      $(this).append(copySpanEle);
+      copySpanEle.click((e) => {
         e.stopPropagation();
-        const parentText = $(this).clone().children(".huifu-copy").remove().end().text().trim();
-        insetCustomContent(parentText, ".centered-container .retextarea");
+        const copyText = _handleHtml($(this).closest('.forum-post').find('.retext').html());
+        insetCustomContent(copyText, ".centered-container .retextarea");
         scrollToEle(".centered-container .retextarea", 80);
         setTimeout(() => {
           getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
@@ -1419,19 +1423,63 @@ function huifuCopy() {
     });
   } else {
     // 旧版回帖
-    $(".reline.list-reply .retext").each(function () {
-      const spanEle = $("<span class='huifu-copy'>+1</span>");
-      $(this).append(spanEle);
-      spanEle.click((e) => {
+    $(".recontent .reline.list-reply .redate").each(function () {
+      const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
+      $(this).prepend(copySpanEle);
+      copySpanEle.click((e) => {
         e.stopPropagation();
-        const parentText = $(this).clone().children(".huifu-copy").remove().end().text().trim();
-        insetCustomContent(parentText, ".centered-container .retextarea");
+        const copyText = _handleHtml($(this).closest('.reline.list-reply').find('.retext').html());
+        insetCustomContent(copyText, ".centered-container .retextarea");
         scrollToEle(".centered-container .retextarea", 80);
         setTimeout(() => {
           getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
         }, 150);
       });
     });
+  }
+  function _handleHtml(retextHtml) {
+    // 创建一个临时的 div 来解析 HTML 内容
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = retextHtml;
+    // 缓存标签处理方法
+    const tagHandlers = new Map([
+      ['img', node => `[img]${node.getAttribute('src')}[/img]`],
+      ['audio', node => `[audio]${node.getAttribute('src')}[/audio]`],
+      ['video', node => `[movie]${node.getAttribute('src')}[/movie]`],
+      ['a', node => {
+        const href = node.getAttribute('href');
+        const text = node.textContent.trim();
+        // 如果链接文本和URL相同，只输出URL
+        return href === text ? text : `[url=${href}]${text}[/url]`;
+      }]
+    ]);
+    // 节点处理
+    const processNode = (node) => {
+      // 文本节点直接返回内容
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.textContent;
+      }
+      // 元素节点处理
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const tagName = node.tagName.toLowerCase();
+        const handler = tagHandlers.get(tagName);
+        // 如果有对应的处理器，直接处理
+        if (handler) {
+          return handler(node);
+        }
+        // 其他元素，字符串拼接
+        if (node.childNodes.length) {
+          return Array.from(node.childNodes)
+            .map(processNode)
+            .join('');
+        }
+      }
+      return '';
+    };
+    // 字符串拼接
+    return Array.from(tempDiv.childNodes)
+      .map(processNode)
+      .join('');
   }
 }
 // 隐藏楼主勋章
@@ -1952,7 +2000,7 @@ function createScriptSetting() {
               </label>
             </div>
           </li>
-          <li class="setting-li-between more-setting">
+          <!--<li class="setting-li-between more-setting">
             <span>吹牛历史查询</span>
             <div class="v2jun-switch">
               <input name="showChuiniuHistory" value="true" ${getUserSetting("showChuiniuHistory") ? "checked" : ""
@@ -1962,7 +2010,7 @@ function createScriptSetting() {
                 <span class="v2jun-switch-handle"></span>
               </label>
             </div>
-          </li>
+          </li>-->
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>复读机(回帖+1)</span>
             <div class="v2jun-switch">
