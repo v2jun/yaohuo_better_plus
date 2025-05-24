@@ -202,7 +202,7 @@ const customCSS = `
     padding:0 10px;
     text-align:center;
     color:#fff;
-    margin-left:20px;
+    margin:0 10px 0 20px;
     background-color: #407088;
     border-radius: 5px;
     white-space:nowrap;
