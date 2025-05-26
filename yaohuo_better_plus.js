@@ -58,6 +58,8 @@ const defaultSetting = {
   showChuiniuHistory: false, // 显示吹牛发布者历史
   showHuifuCopy: false, // 复读机(回复+1)
   huifuCopyAutoSubmit: false, // 复读机自动提交
+  useUserBlackList: false, // 使用用户黑名单
+  userBlackList: "" // 黑名单,填入用户ID即可屏蔽帖子和回复
 };
 // 自定义样式
 const customCSS = `
@@ -569,163 +571,164 @@ const emojiList = [
   "https://pic2.ziyuan.wang/user/v2jun/2025/04/6ba11b67f84c108d4b83a0c60717f24_b41624539f24e.jpg"
 ];
 // ubb
-const ubbList = [{
-  ubbType: "input",
-  name: "超链接",
-  inputTitle: ["网址", "网址说明"],
-  ubbHandle: (inputValues) => `[url=${inputValues[0]}]${inputValues[1]}[/url]`,
-},
-{
-  ubbType: "input",
-  name: "红字",
-  inputTitle: ["红字内容"],
-  ubbHandle: (inputValues) => `[forecolor=red]${inputValues[0]}[/forecolor]`,
-},
-{
-  ubbType: "input",
-  name: "加粗",
-  inputTitle: ["加粗内容"],
-  ubbHandle: (inputValues) => `[b]${inputValues[0]}[/b]`,
-},
-{
-  ubbType: "input",
-  name: "斜体",
-  inputTitle: ["斜体内容"],
-  ubbHandle: (inputValues) => `[i]${inputValues[0]}[/i]`,
-},
-{
-  ubbType: "input",
-  name: "下划线",
-  inputTitle: ["下划线内容"],
-  ubbHandle: (inputValues) => `[u]${inputValues[0]}[/u]`,
-},
-{
-  ubbType: "input",
-  name: "删除线",
-  inputTitle: ["删除线内容"],
-  ubbHandle: (inputValues) => `[strike]${inputValues[0]}[/strike]`,
-},
-{
-  ubbType: "input",
-  name: "分割线",
-  inputTitle: ["不需要输入内容，直接点击确定即可"],
-  ubbHandle: (inputValues) => `[hr]`,
-},
-{
-  ubbType: "input",
-  name: "代码",
-  inputTitle: ["代码内容"],
-  ubbHandle: (inputValues) => `[code]${inputValues[0]}[/code]`,
-},
-{
-  ubbType: "input",
-  name: "拨号",
-  inputTitle: ["手机号码"],
-  ubbHandle: (inputValues) => `[call]${inputValues[0]}[/call]`,
-},
-{
-  ubbType: "input",
-  name: "发短信",
-  inputTitle: ["手机号码", "短信内容"],
-  ubbHandle: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`,
-},
-{
-  ubbType: "input",
-  name: "当前时间",
-  inputTitle: ["不需要输入内容，直接点击确定即可"],
-  ubbHandle: (inputValues) => `[now]`,
-},
-{
-  ubbType: "input",
-  name: "倒计时天数",
-  inputTitle: ["需要倒计时的日期(格式：2030-01-01)"],
-  ubbHandle: (inputValues) => `[codo]${inputValues[0]}[/codo]`,
-},
-{
-  ubbType: "input",
-  name: "QQ音乐",
-  inputTitle: ["QQ音乐歌曲链接或ID"],
-  ubbHandle: (inputValues) => `[qqmusic]${inputValues[0]}[/qqmusic]`,
-},
-{
-  ubbType: "input",
-  name: "网易云音乐",
-  inputTitle: ["网易云音乐歌曲链接或ID"],
-  ubbHandle: (inputValues) => `[wymusic]${inputValues[0]}[/wymusic]`,
-},
-{
-  ubbType: "input",
-  name: "图片(外链)",
-  inputTitle: ["图片链接"],
-  ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]`,
-},
-// { name: "短链生成" },
-{
-  ubbType: "uploadImg",
-  name: "图片(上传)",
-  ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]\n`,
-  upload: {
-    type: "img",
-    accept: "image/*",
+const ubbList = [
+  {
+    ubbType: "input",
+    name: "超链接",
+    inputTitle: ["网址", "网址说明"],
+    ubbHandle: (inputValues) => `[url=${inputValues[0]}]${inputValues[1]}[/url]`
   },
-},
-{
-  ubbType: "input",
-  name: "视频(外链)",
-  inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-},
-// {
-//   ubbType: "uploadFile",
-//   name: "视频(上传)",
-//   inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
-//   ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-//   upload: {
-//     type: "movie",
-//     // accept: "video/*",
-//     accept: "*",
-//   },
-// },
-{
-  ubbType: "input",
-  name: "音频(外链)",
-  inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-  upload: {
-    type: "audio",
-    accept: "audio/*",
+  {
+    ubbType: "input",
+    name: "红字",
+    inputTitle: ["红字内容"],
+    ubbHandle: (inputValues) => `[forecolor=red]${inputValues[0]}[/forecolor]`
   },
-},
-{
-  ubbType: "jxVideo",
-  name: "抖音解析",
-  inputTitle: ["链接(不需要去除中文和多余字符)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`,
-},
-{
-  ubbType: "jxVideo",
-  name: "快手解析",
-  inputTitle: ["链接(不需要去除中文和多余字符)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`,
-},
-{
-  ubbType: "jxVideo",
-  name: "TikTok解析",
-  inputTitle: ["链接(不需要去除中文和多余字符)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`,
-},
-{
-  ubbType: "jxZb",
-  name: "抖音直播解析",
-  inputTitle: ["链接(不需要去除中文和多余字符)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`,
-},
-{
-  ubbType: "jxZb",
-  name: "快手直播解析",
-  inputTitle: ["链接(不需要去除中文和多余字符)"],
-  ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`,
-},
+  {
+    ubbType: "input",
+    name: "加粗",
+    inputTitle: ["加粗内容"],
+    ubbHandle: (inputValues) => `[b]${inputValues[0]}[/b]`
+  },
+  {
+    ubbType: "input",
+    name: "斜体",
+    inputTitle: ["斜体内容"],
+    ubbHandle: (inputValues) => `[i]${inputValues[0]}[/i]`
+  },
+  {
+    ubbType: "input",
+    name: "下划线",
+    inputTitle: ["下划线内容"],
+    ubbHandle: (inputValues) => `[u]${inputValues[0]}[/u]`
+  },
+  {
+    ubbType: "input",
+    name: "删除线",
+    inputTitle: ["删除线内容"],
+    ubbHandle: (inputValues) => `[strike]${inputValues[0]}[/strike]`
+  },
+  {
+    ubbType: "input",
+    name: "分割线",
+    inputTitle: ["不需要输入内容，直接点击确定即可"],
+    ubbHandle: (inputValues) => `[hr]`
+  },
+  {
+    ubbType: "input",
+    name: "代码",
+    inputTitle: ["代码内容"],
+    ubbHandle: (inputValues) => `[code]${inputValues[0]}[/code]`
+  },
+  {
+    ubbType: "input",
+    name: "拨号",
+    inputTitle: ["手机号码"],
+    ubbHandle: (inputValues) => `[call]${inputValues[0]}[/call]`
+  },
+  {
+    ubbType: "input",
+    name: "发短信",
+    inputTitle: ["手机号码", "短信内容"],
+    ubbHandle: (inputValues) => `[url=sms:${inputValues[0]}?body=${inputValues[0]}]点此发送[/url]`
+  },
+  {
+    ubbType: "input",
+    name: "当前时间",
+    inputTitle: ["不需要输入内容，直接点击确定即可"],
+    ubbHandle: (inputValues) => `[now]`
+  },
+  {
+    ubbType: "input",
+    name: "倒计时天数",
+    inputTitle: ["需要倒计时的日期(格式：2030-01-01)"],
+    ubbHandle: (inputValues) => `[codo]${inputValues[0]}[/codo]`
+  },
+  {
+    ubbType: "input",
+    name: "QQ音乐",
+    inputTitle: ["QQ音乐歌曲链接或ID"],
+    ubbHandle: (inputValues) => `[qqmusic]${inputValues[0]}[/qqmusic]`
+  },
+  {
+    ubbType: "input",
+    name: "网易云音乐",
+    inputTitle: ["网易云音乐歌曲链接或ID"],
+    ubbHandle: (inputValues) => `[wymusic]${inputValues[0]}[/wymusic]`
+  },
+  {
+    ubbType: "input",
+    name: "图片(外链)",
+    inputTitle: ["图片链接"],
+    ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]`
+  },
+  // { name: "短链生成" },
+  {
+    ubbType: "uploadImg",
+    name: "图片(上传)",
+    ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]\n`,
+    upload: {
+      type: "img",
+      accept: "image/*"
+    }
+  },
+  {
+    ubbType: "input",
+    name: "视频(外链)",
+    inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`
+  },
+  // {
+  //   ubbType: "uploadFile",
+  //   name: "视频(上传)",
+  //   inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
+  //   ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+  //   upload: {
+  //     type: "movie",
+  //     // accept: "video/*",
+  //     accept: "*",
+  //   },
+  // },
+  {
+    ubbType: "input",
+    name: "音频(外链)",
+    inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    upload: {
+      type: "audio",
+      accept: "audio/*"
+    }
+  },
+  {
+    ubbType: "jxVideo",
+    name: "抖音解析",
+    inputTitle: ["链接(不需要去除中文和多余字符)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`
+  },
+  {
+    ubbType: "jxVideo",
+    name: "快手解析",
+    inputTitle: ["链接(不需要去除中文和多余字符)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`
+  },
+  {
+    ubbType: "jxVideo",
+    name: "TikTok解析",
+    inputTitle: ["链接(不需要去除中文和多余字符)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`
+  },
+  {
+    ubbType: "jxZb",
+    name: "抖音直播解析",
+    inputTitle: ["链接(不需要去除中文和多余字符)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`
+  },
+  {
+    ubbType: "jxZb",
+    name: "快手直播解析",
+    inputTitle: ["链接(不需要去除中文和多余字符)"],
+    ubbHandle: (inputValues) => `[movie]${inputValues}[/movie]`
+  }
   // { ubbType:'jxVideo',name: "B站解析", inputTitle: ["链接(不需要去除中文和多余字符)"], ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
   // { name: "皮皮虾解析", inputTitle: ["链接(不需要去除中文和多余字符)"], ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]` },
   // { name: "屋舍文件" },
@@ -740,8 +743,7 @@ const settingIconBase64 =
 
   if (!checkLocation()) return;
 
-  const jqueryIsLoad = await loadAndExecuteScript("https://code.jquery.com/jquery-3.7.1.min.js",
-    "jquery-3.7.1.min");
+  const jqueryIsLoad = await loadAndExecuteScript("https://code.jquery.com/jquery-3.7.1.min.js", "jquery-3.7.1.min");
   if (!jqueryIsLoad) return;
 
   const setttingIsInit = await initSetting();
@@ -771,20 +773,103 @@ const settingIconBase64 =
   $(window).on("load", () => {
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, changeImgSize);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
-    userSetting["autoLoadMoreHuifuList"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
+    userSetting["autoLoadMoreHuifuList"] &&
+      executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
+    listenRecontentLoad();
+    handleUserBlacklist();
   });
 
   checkVersion();
 })();
+// 黑名单
+function handleUserBlacklist() {
+  const userWhiteIdList = ['1000','36787','11637'];// 管理员白名单
+
+  const userBlackIdListStr = getUserSetting("userBlackList");
+  if (!userBlackIdListStr || userBlackIdListStr.length === 0) return;
+  const userBlackIdList = userBlackIdListStr.split(",").filter(id => !userWhiteIdList.includes(id));
+  
+  // 处理帖子列表
+  _handleBookList();
+  // executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, _handlePostList);
+  // 处理评论区
+  executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _handleComments);
+
+  // 处理帖子列表（首页、版块列表、帖子详情页）
+  async function _handleBookList() {
+    const bookList = $(".list a, .listdata.line1, .listdata.line2");
+    bookList.each(function() {
+      const bookItem = $(this);
+      // console.log("解析到帖子列表:", bookItem);
+      const bookLink = bookItem.find('a[href^="/bbs-"]');
+      const boodIdArr = [];
+      bookLink.each(function() {
+        const bookId = $(this).attr('href').match(/\/bbs-(\d+)\.html/)?.[1];
+        // console.log("解析到帖子ID:", bookId);
+        if (!bookId) return;
+        else boodIdArr.push(bookId);
+      });
+      // 请求每个帖子的管理信息，以拿到用户id
+      const requests = boodIdArr.map(id => $.get(`/bbs/Book_View_admin.aspx?id=${id}`));
+      Promise.all(requests)
+        .then(reqRes => {
+          reqRes.forEach((resItem) => {
+            const $linksWithUserID = $(resItem).find('a[href*="touserid="]');
+            $linksWithUserID.each(function() {
+              const bookUserId = _extractUserId($(this).attr('href'));
+              // console.log("解析到的用户ID:", bookUserId);
+              if (bookUserId && userBlackIdList.includes(bookUserId)) {
+                // console.log("发现此评论作者在黑名单中,用户ID:", bookUserId);
+                $(bookItem).remove();
+              }
+            })
+          })
+        })
+    })
+  }
+  // 处理评论区
+  function _handleComments() {
+    const selector = $(`
+      .recontent .forum-post,
+      .recontent .list-reply,
+      .recontent .recontent .forum-post,
+      .recontent .recontent .list-reply`);
+    const userLinkSelector = ".user-nick a, .renick a";
+    // 一次性查询所有评论，减少DOM操作
+    $(selector).not('.v2jun-check-blocklist-processed').each(function () {
+      const $userLink = $(this).find(userLinkSelector);
+      // 如果找到了用户链接
+      if ($userLink.length && $userLink.length > 0) {
+        const userHref = $userLink.attr("href");
+        const userId = _extractUserId(userHref);
+        // console.log("解析到评论区用户ID:", userId);
+        // 如果用户ID在黑名单中，移除评论
+        if (userId && userBlackIdList.includes(userId)) {
+          console.log("发现此评论作者在黑名单中,用户ID:", userId);
+          $(this).remove();
+        }
+      }
+      $(this).addClass('v2jun-check-blocklist-processed');
+    });
+  }
+
+  // 提取用户ID
+  function _extractUserId(url) {
+    if (!url) return null;
+    // 匹配两种可能的格式:
+    // 1. touserid=数字
+    // 2. mainuserid=数字
+    const match = url.match(/[to|main]userid=(\d+)/);
+    return match ? match[1] : null;
+  }
+}
 // 检查更新
 function checkVersion() {
   sessionStorage.removeItem("canUpdate");
   sessionStorage.removeItem("newVersion");
   myAjax("https://greasyfork.org/scripts/504289.json").then((data) => {
-    const {
-      version
-    } = data;
+    const { version } = data;
     if (version <= defaultSetting.version || !getUserSetting("checkVersion")) return;
     notifyBox("已有新版本，请自行更新。如不需要更新，可在设置里关闭", false, 3000);
     sessionStorage.setItem("canUpdate", true);
@@ -813,7 +898,7 @@ function openLayer(url) {
     height: "100%",
     backgroundColor: "gray",
     zIndex: "1001",
-    opacity: "0.8",
+    opacity: "0.8"
   });
   // 创建弹出层
   let open_layer = $("<div>").css({
@@ -832,7 +917,7 @@ function openLayer(url) {
     zIndex: "1002",
     overflow: "auto",
     margin: "0",
-    padding: "0",
+    padding: "0"
   });
   // 创建 iframe
   let iframe = $("<iframe>")
@@ -841,7 +926,7 @@ function openLayer(url) {
       width: "100%",
       height: "100%",
       border: "0",
-      display: "block",
+      display: "block"
     });
 
   // 将 iframe 添加到弹出层
@@ -911,9 +996,9 @@ function autoLoadMoreBookList() {
 }
 // 上一页，下一页按钮互换位置
 function useRightNextBtn() {
-  const btBox = $('.btBox .bt2');
+  const btBox = $(".btBox .bt2");
   if (!btBox.length) return;
-  const links = btBox.children('a');
+  const links = btBox.children("a");
   if (links.length !== 2) return;
   // 直接修改按钮的顺序
   btBox.append(links.get().reverse());
@@ -1020,13 +1105,12 @@ function bookViewBetter() {
 
   let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
   if (isBookViewMod) contentHeader = $(".upload-container .form-group .content-header");
-  console.log('isBookViewMod:', isBookViewMod);
+  console.log("isBookViewMod:", isBookViewMod);
   // 向页面内注入区域
   contentHeader.after('<div class="v2jun-emojilist-div bookview-emoji"></div>');
   createEmojiHtml(".upload-container .form-group [name='book_content']");
   contentHeader.after('<div class="v2jun-ubblist-div bookview-ubb"></div>');
   createUbbHtml(".upload-container .form-group [name='book_content']");
-
 
   // 读取设置，当折叠时隐藏
   !getUserSetting("showBookViewEmoji") && $(".v2jun-emojilist-div.bookview-emoji").css("display", "none");
@@ -1037,10 +1121,7 @@ function createUbbHtml(insertEle) {
   // 生成 ubb 按钮
   const ubbListHtml = [];
   ubbList.forEach((ubbItem) => {
-    const {
-      name,
-      upload
-    } = ubbItem;
+    const { name, upload } = ubbItem;
     let ubbSpanEle = null;
     if (upload?.type?.length > 0) {
       ubbSpanEle = $(`
@@ -1055,13 +1136,7 @@ function createUbbHtml(insertEle) {
   $(".v2jun-ubblist-div").append(ubbListHtml);
   // 设置 ubb 点击功能,生成时设置会导致某些ubb点击无法生效
   ubbList.forEach((ubbItem) => {
-    const {
-      ubbType,
-      name,
-      inputTitle,
-      ubbHandle,
-      upload
-    } = ubbItem;
+    const { ubbType, name, inputTitle, ubbHandle, upload } = ubbItem;
     $(`.v2jun-ubblist-div .v2jun-ubb-item:contains("${name}")`).click(() => {
       if (ubbType == "input") {
         // 输入域
@@ -1131,7 +1206,7 @@ function createUbbHtml(insertEle) {
             }
 
             showWaitBox("上传中…"); // 上传等待提示
-            let uploadCount = { currentIndex: 0, success: 0, fail: 0, }; // 存储上传结果数量
+            let uploadCount = { currentIndex: 0, success: 0, fail: 0 }; // 存储上传结果数量
             const uploadNextImage = () => {
               if (uploadCount.currentIndex >= tempFiles.length) {
                 // 所有图片上传完成
@@ -1148,7 +1223,7 @@ function createUbbHtml(insertEle) {
               if (getUserSetting("imgUploadSelOpt") == 1) {
                 // 水墨图床添加 token
                 options.headers = {
-                  token: getUserSetting("suimoToken"),
+                  token: getUserSetting("suimoToken")
                 };
               }
               const currentImg = tempFiles[uploadCount.currentIndex];
@@ -1163,14 +1238,18 @@ function createUbbHtml(insertEle) {
               const data = new FormData();
               data.append("image", currentImg);
               uploadFiles({
-                url, data, options,
+                url,
+                data,
+                options,
                 success: (res) => {
                   const { code, msg, data } = res;
                   if (code == 200) {
                     uploadCount.success++;
                     insetCustomContent(ubbHandle([data.url]), insertEle);
 
-                    if (tempFiles.length > 1) { notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片已上传成功`, true, 200); }
+                    if (tempFiles.length > 1) {
+                      notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片已上传成功`, true, 200);
+                    }
                   } else {
                     uploadCount.fail++;
                     notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
@@ -1209,7 +1288,6 @@ function createUbbHtml(insertEle) {
             }
 
             for (const file of tempFiles) {
-
             }
           });
       }
@@ -1223,8 +1301,8 @@ function createEmojiHtml(insertEle) {
   const emojiWidth = 50; // 表情宽度(包含间距)
   const emojisPerRow = Math.floor(containerWidth / emojiWidth);
   const rowsPerPage = 5; // 每页显示5行
-  const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量  
-  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting('bookviewEmojiPage') : getUserSetting('huifuEmojiPage'));// 获取缓存的页码
+  const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量
+  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting("bookviewEmojiPage") : getUserSetting("huifuEmojiPage")); // 获取缓存的页码
   const totalPages = Math.ceil(emojiList.length / pageSize); // 总页数
   // 确保页码在有效范围内
   currentPage = Math.min(Math.max(currentPage, 1), totalPages);
@@ -1238,7 +1316,7 @@ function createEmojiHtml(insertEle) {
     currentEmojis.forEach((faceitem) => {
       const img = $("<img/>", {
         class: "v2jun-emojilist-img",
-        src: faceitem,
+        src: faceitem
       });
       $(img).click(() => insetCustomContent(`[img]${faceitem}[/img]`, insertEle));
       emojiListHtml.push(img);
@@ -1249,7 +1327,7 @@ function createEmojiHtml(insertEle) {
     // 更新分页按钮
     updatePaginationButtons();
     // 缓存当前页码
-    saveUserSetting(insertEle.includes("book_content") ? 'bookviewEmojiPage' : 'huifuEmojiPage', page);
+    saveUserSetting(insertEle.includes("book_content") ? "bookviewEmojiPage" : "huifuEmojiPage", page);
   }
 
   // 创建分页按钮
@@ -1260,13 +1338,13 @@ function createEmojiHtml(insertEle) {
       class: "emoji-pagination",
       style: `text-align:center;border: 1px solid #d4d4d4;border-bottom-left-radius:5px;border-bottom-right-radius:5px;
               ${isBookView ? "margin:-6px auto 10px;" : "margin:-6px 1% 10px;"}
-      `,
+      `
     });
 
     const prevBtn = $("<span/>", {
       class: "emoji-page-btn",
       text: "上一页",
-      style: "margin:0 10px;cursor:pointer;color:#999;", // 第一页时默认置灰
+      style: "margin:0 10px;cursor:pointer;color:#999;" // 第一页时默认置灰
     }).click(() => {
       if (currentPage > 1) {
         currentPage--;
@@ -1277,7 +1355,7 @@ function createEmojiHtml(insertEle) {
     const nextBtn = $("<span/>", {
       class: "emoji-page-btn",
       text: "下一页",
-      style: "margin:0 10px;cursor:pointer;color:#1ABCAF;",
+      style: "margin:0 10px;cursor:pointer;color:#1ABCAF;"
     }).click(() => {
       if (currentPage < totalPages) {
         currentPage++;
@@ -1287,7 +1365,7 @@ function createEmojiHtml(insertEle) {
 
     const pageInfo = $("<span/>", {
       class: "emoji-page-info",
-      style: "margin:0 10px;",
+      style: "margin:0 10px;"
     }).text(`${currentPage}/${totalPages}`); // 初始化时就设置页码
 
     paginationDiv.append(prevBtn, pageInfo, nextBtn);
@@ -1321,7 +1399,7 @@ function createEmojiHtml(insertEle) {
     });
   });
   observer.observe($(".v2jun-emojilist-div")[0], {
-    attributes: true,
+    attributes: true
   });
 }
 // 修改图片大小
@@ -1375,7 +1453,7 @@ function changeImgSize() {
     observer.observe(replyArea, {
       childList: true,
       subtree: true,
-      characterData: true,
+      characterData: true
     });
   }
 
@@ -1413,7 +1491,7 @@ function huifuCopy() {
       $(this).append(copySpanEle);
       copySpanEle.click((e) => {
         e.stopPropagation();
-        const copyText = _handleHtml($(this).closest('.forum-post').find('.retext').html());
+        const copyText = _handleHtml($(this).closest(".forum-post").find(".retext").html());
         insetCustomContent(copyText, ".centered-container .retextarea");
         scrollToEle(".centered-container .retextarea", 80);
         setTimeout(() => {
@@ -1428,7 +1506,7 @@ function huifuCopy() {
       $(this).prepend(copySpanEle);
       copySpanEle.click((e) => {
         e.stopPropagation();
-        const copyText = _handleHtml($(this).closest('.reline.list-reply').find('.retext').html());
+        const copyText = _handleHtml($(this).closest(".reline.list-reply").find(".retext").html());
         insetCustomContent(copyText, ".centered-container .retextarea");
         scrollToEle(".centered-container .retextarea", 80);
         setTimeout(() => {
@@ -1439,19 +1517,22 @@ function huifuCopy() {
   }
   function _handleHtml(retextHtml) {
     // 创建一个临时的 div 来解析 HTML 内容
-    const tempDiv = document.createElement('div');
+    const tempDiv = document.createElement("div");
     tempDiv.innerHTML = retextHtml;
     // 缓存标签处理方法
     const tagHandlers = new Map([
-      ['img', node => `[img]${node.getAttribute('src')}[/img]`],
-      ['audio', node => `[audio]${node.getAttribute('src')}[/audio]`],
-      ['video', node => `[movie]${node.getAttribute('src')}[/movie]`],
-      ['a', node => {
-        const href = node.getAttribute('href');
-        const text = node.textContent.trim();
-        // 如果链接文本和URL相同，只输出URL
-        return href === text ? text : `[url=${href}]${text}[/url]`;
-      }]
+      ["img", (node) => `[img]${node.getAttribute("src")}[/img]`],
+      ["audio", (node) => `[audio]${node.getAttribute("src")}[/audio]`],
+      ["video", (node) => `[movie]${node.getAttribute("src")}[/movie]`],
+      [
+        "a",
+        (node) => {
+          const href = node.getAttribute("href");
+          const text = node.textContent.trim();
+          // 如果链接文本和URL相同，只输出URL
+          return href === text ? text : `[url=${href}]${text}[/url]`;
+        }
+      ]
     ]);
     // 节点处理
     const processNode = (node) => {
@@ -1469,17 +1550,13 @@ function huifuCopy() {
         }
         // 其他元素，字符串拼接
         if (node.childNodes.length) {
-          return Array.from(node.childNodes)
-            .map(processNode)
-            .join('');
+          return Array.from(node.childNodes).map(processNode).join("");
         }
       }
-      return '';
+      return "";
     };
     // 字符串拼接
-    return Array.from(tempDiv.childNodes)
-      .map(processNode)
-      .join('');
+    return Array.from(tempDiv.childNodes).map(processNode).join("");
   }
 }
 // 隐藏楼主勋章
@@ -1517,7 +1594,7 @@ function speedEatMoney() {
           "吃了..",
           "吃了。。",
           "吃肉..",
-          "先吃肉",
+          "先吃肉"
         ];
         const index = Math.floor(Math.random() * eatWordsArr.length);
         insetCustomContent(eatWordsArr[index], ".centered-container .retextarea", true);
@@ -1555,7 +1632,7 @@ async function chuiniuHistory() {
     const countAnswer2 = queHistoryAnswers.filter((v) => v === "2").length;
     $("#chuiniuWinningEle")
       .css({
-        "text-align": "left",
+        "text-align": "left"
       })
       .html(
         `“<span style="color:#3d68a8;">${chuiniuQueUserNickname}</span>”最近<span style="color:blue;font-weight:bold;">${queHistoryAnswers.length}</span>次已完成大话选项：答案<span style="color:blue;font-weight:bold;">1</span>次数：<span style="color:red;font-weight:bold;">${countAnswer1}</span>,答案<span style="color:blue;font-weight:bold;">2</span>次数： <span style="color:red;font-weight:bold;">${countAnswer2}</span>`
@@ -1580,8 +1657,7 @@ async function chuiniuHistory() {
       let historyPage = 1; // 翻页，达到预设值时停止
 
       const historyText = await getPageContent(`/games/chuiniu/book_list.aspx?type=0&touserid=${toUserId}`);
-      const userHistoryTotal = historyText.slice(historyText.indexOf("页，共 ") + 4, historyText.indexOf(
-        " 条")); // 吹牛历史总条数
+      const userHistoryTotal = historyText.slice(historyText.indexOf("页，共 ") + 4, historyText.indexOf(" 条")); // 吹牛历史总条数
 
       const getQueUserHistoryid = async () => {
         const tempElements = $(historyText).filter(".line1, .line2");
@@ -1622,16 +1698,14 @@ function addTopAndDown() {
     }
   }
 
-  let el = navigator.userAgent.indexOf("Firefox") != -1 || navigator.userAgent.indexOf("MSIE") != -1 ? document
-    .documentElement : document.body,
+  let el = navigator.userAgent.indexOf("Firefox") != -1 || navigator.userAgent.indexOf("MSIE") != -1 ? document.documentElement : document.body,
     t1,
     t2,
     speed_by_click = 200,
     zIindex = 1001;
 
   function getDocumentHeight() {
-    return document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight : document.body
-      .offsetHeight;
+    return document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight : document.body.offsetHeight;
   }
 
   function get_scroll(a) {
@@ -1795,7 +1869,7 @@ function createScriptSetting() {
       "z-index": 9999,
       "display": "flex",
       "justify-content": "center",
-      "align-items": "center",
+      "align-items": "center"
     });
 
     // 设置弹出内容容器的样式
@@ -1807,7 +1881,7 @@ function createScriptSetting() {
       "overflow-y": "auto",
       "padding": "20px",
       "text-align": "center",
-      "border-radius": "5px",
+      "border-radius": "5px"
     });
 
     // 添加弹出内容
@@ -1857,8 +1931,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>检查更新</span>
             <div class="v2jun-switch">
-              <input name="checkVersion" value="true" ${getUserSetting("checkVersion") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="checkVersion" type="checkbox">
+              <input name="checkVersion" value="true" ${
+                getUserSetting("checkVersion") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="checkVersion" type="checkbox">
               <label class="switch-label" for="checkVersion">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1868,8 +1943,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>一键回到顶部/底部</span>
             <div class="v2jun-switch">
-              <input name="showTopAndDownBtn" value="true" ${getUserSetting("showTopAndDownBtn") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="showTopAndDownBtn" type="checkbox">
+              <input name="showTopAndDownBtn" value="true" ${
+                getUserSetting("showTopAndDownBtn") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="showTopAndDownBtn" type="checkbox">
               <label class="switch-label" for="showTopAndDownBtn">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1879,8 +1955,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>隐藏楼主勋章</span>
             <div class="v2jun-switch">
-              <input name="hideXunzhang" value="true" ${getUserSetting("hideXunzhang") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="hideXunzhang" type="checkbox">
+              <input name="hideXunzhang" value="true" ${
+                getUserSetting("hideXunzhang") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="hideXunzhang" type="checkbox">
               <label class="switch-label" for="hideXunzhang">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1902,14 +1979,15 @@ function createScriptSetting() {
           <li class="setting-li-between sel-suimo">
             <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床token</a></span>
             <input style="width:100px;" class="v2jun-setting-li-input" value="${getUserSetting(
-        "suimoToken"
-      )}" name="suimoToken" id="suimoToken" type="text" placeholder="为空则不会上传…"/>
+              "suimoToken"
+            )}" name="suimoToken" id="suimoToken" type="text" placeholder="为空则不会上传…"/>
           </li>
           <li class="setting-li-between">
             <span>我要用右手</span>
             <div class="v2jun-switch">
-              <input name="useRight" value="true" ${getUserSetting("useRight") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="useRight" type="checkbox">
+              <input name="useRight" value="true" ${
+                getUserSetting("useRight") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="useRight" type="checkbox">
               <label class="switch-label" for="useRight">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1920,8 +1998,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>帖子自动加载</span>
             <div class="v2jun-switch">
-              <input name="autoLoadMoreBookList" value="true" ${getUserSetting("autoLoadMoreBookList") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
+              <input name="autoLoadMoreBookList" value="true" ${
+                getUserSetting("autoLoadMoreBookList") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
               <label class="switch-label" for="autoLoadMoreBookList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1931,8 +2010,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>回复自动加载</span>
             <div class="v2jun-switch">
-              <input name="autoLoadMoreHuifuList" value="true" ${getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
+              <input name="autoLoadMoreHuifuList" value="true" ${
+                getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
               <label class="switch-label" for="autoLoadMoreHuifuList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1942,8 +2022,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>帖子在弹窗中打开</span>
             <div class="v2jun-switch">
-              <input name="openLayerForBook" value="true" ${getUserSetting("openLayerForBook") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="openLayerForBook" type="checkbox">
+              <input name="openLayerForBook" value="true" ${
+                getUserSetting("openLayerForBook") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="openLayerForBook" type="checkbox">
               <label class="switch-label" for="openLayerForBook">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1954,8 +2035,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>发帖表情自动收起</span>
             <div class="v2jun-switch">
-              <input name="autoCloseBookViewEmoji" value="true" ${getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
+              <input name="autoCloseBookViewEmoji" value="true" ${
+                getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
               <label class="switch-label" for="autoCloseBookViewEmoji">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1965,8 +2047,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>回帖表情自动收起</span>
             <div class="v2jun-switch">
-              <input name="autoCloseHuifuEmoji" value="true" ${getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
+              <input name="autoCloseHuifuEmoji" value="true" ${
+                getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
               <label class="switch-label" for="autoCloseHuifuEmoji">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1976,8 +2059,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>输入框自动聚焦</span>
             <div class="v2jun-switch">
-              <input name="textareaAutoFocus" value="true" ${getUserSetting("textareaAutoFocus") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
+              <input name="textareaAutoFocus" value="true" ${
+                getUserSetting("textareaAutoFocus") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
               <label class="switch-label" for="textareaAutoFocus">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1992,8 +2076,9 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting">
             <span>一键吃肉</span>
             <div class="v2jun-switch">
-              <input name="oneClickCollectMoney" value="true" ${getUserSetting("oneClickCollectMoney") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="oneClickCollectMoney" type="checkbox">
+              <input name="oneClickCollectMoney" value="true" ${
+                getUserSetting("oneClickCollectMoney") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="oneClickCollectMoney" type="checkbox">
               <label class="switch-label" for="oneClickCollectMoney">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2003,8 +2088,9 @@ function createScriptSetting() {
           <!--<li class="setting-li-between more-setting">
             <span>吹牛历史查询</span>
             <div class="v2jun-switch">
-              <input name="showChuiniuHistory" value="true" ${getUserSetting("showChuiniuHistory") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="showChuiniuHistory" type="checkbox">
+              <input name="showChuiniuHistory" value="true" ${
+                getUserSetting("showChuiniuHistory") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="showChuiniuHistory" type="checkbox">
               <label class="switch-label" for="showChuiniuHistory">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2014,8 +2100,9 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>复读机(回帖+1)</span>
             <div class="v2jun-switch">
-              <input name="showHuifuCopy" value="true" ${getUserSetting("showHuifuCopy") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="showHuifuCopy" type="checkbox">
+              <input name="showHuifuCopy" value="true" ${
+                getUserSetting("showHuifuCopy") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="showHuifuCopy" type="checkbox">
               <label class="switch-label" for="showHuifuCopy">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2025,13 +2112,32 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>复读机自动提交</span>
             <div class="v2jun-switch">
-              <input name="huifuCopyAutoSubmit" value="true" ${getUserSetting("huifuCopyAutoSubmit") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="huifuCopyAutoSubmit" type="checkbox">
+              <input name="huifuCopyAutoSubmit" value="true" ${
+                getUserSetting("huifuCopyAutoSubmit") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="huifuCopyAutoSubmit" type="checkbox">
               <label class="switch-label" for="huifuCopyAutoSubmit">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
               </label>
             </div>
+          </li>
+          <li class="setting-li-between extra-setting" style="display:none;">
+            <span>黑名单增强</span>
+            <div class="v2jun-switch">
+              <input name="useUserBlackList" value="true" ${
+                getUserSetting("useUserBlackList") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="useUserBlackList" type="checkbox">
+              <label class="switch-label" for="useUserBlackList">
+                <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
+                <span class="v2jun-switch-handle"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-li-between use-black-list">
+            <span>黑名单ID</span>
+            <textarea style="width:60%; min-height:40px;resize:vertical" class="v2jun-setting-li-input" name="userBlackList" id="userBlackList" placeholder="输入用户ID，以英文逗号(,)分隔，已自动将论坛管理员加入白名单，为空则不会屏蔽任何人…">${getUserSetting(
+              "userBlackList"
+            )}</textarea>
           </li>
         </ul>
         <footer>
@@ -2045,29 +2151,33 @@ function createScriptSetting() {
     container.append(vSettingEle);
     // 监听下拉选择，改变其他元素状态
     $('form[name="settingForm"]')
-      .find("select")
+      .find("select, input[type='checkbox']")
       .on("change", function () {
-        const selectName = $(this).attr("name");
-        const selectedValue = $(this).val();
+        const changeEventName = $(this).attr("name");
+        const changeEventValue = $(this).val();
+        console.log(changeEventName, changeEventValue);
 
-        if (selectName === "imgUploadSelOpt") {
-          if (selectedValue == 0) $(".v2jun-setting-div .sel-suimo").css("display", "none");
-          else if (selectedValue == 1) $(".v2jun-setting-div .sel-suimo").show();
+        if (changeEventName === "imgUploadSelOpt") {
+          if (changeEventValue == 0) $(".v2jun-setting-div .sel-suimo").css("display", "none");
+          else if (changeEventValue == 1) $(".v2jun-setting-div .sel-suimo").show();
+        } else if (changeEventName === "useUserBlackList") {
+          $(".v2jun-setting-div .use-black-list").css("display", $(this).prop("checked") ? "flex" : "none");
         }
       });
     // 禁止蒙版下的body内容滚动
     $("body").css("overflow", "hidden");
     // 高级设置——额外设置
-    $(".v2jun-setting-div .more-setting-click").click(
-      clickCounter(
-        ".v2jun-setting-div .more-setting-click",
-        () => {
-          $(".v2jun-setting-div .extra-setting").toggle();
-        },
-        3,
-        3
-      )
-    );
+    $(".v2jun-setting-div .extra-setting").toggle();
+    // $(".v2jun-setting-div .more-setting-click").click(
+    //   clickCounter(
+    //     ".v2jun-setting-div .more-setting-click",
+    //     () => {
+    //       $(".v2jun-setting-div .extra-setting").toggle();
+    //     },
+    //     3,
+    //     3
+    //   )
+    // );
     // 清除缓存
     $(".v2jun-setting-div .v2jun-clear-setting").click((e) => {
       localStorage.removeItem("yaohuoBetterPlusSetting");
@@ -2082,7 +2192,7 @@ function createScriptSetting() {
     $(".v2jun-setting-div .v2jun-setting-confirm-btn").click(() => {
       const formData = {};
       $('form[name="settingForm"]')
-        .find("input, select")
+        .find("input, select, textarea")
         .each(function () {
           // 根据不同输入方式格式化值，否则全部为字符串
           if ($(this).is(":checkbox")) {
@@ -2102,13 +2212,11 @@ function createScriptSetting() {
             formData[this.name] = this.value;
           }
         });
-
+      console.log(formData);
       const cacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
       for (const key of Object.keys(formData)) {
         cacheSetting[key] = formData[key];
       }
-      console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;",
-        cacheSetting);
       try {
         localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(cacheSetting));
         notifyBox("保存成功");
@@ -2122,6 +2230,8 @@ function createScriptSetting() {
     });
     // 根据用户设置决定是否显示水墨图床 token 设置
     if (getUserSetting("imgUploadSelOpt") != 1) $(".v2jun-setting-div .sel-suimo").css("display", "none");
+    // 根据用户设置决定是否显示黑名单输入框
+    if (!getUserSetting("useUserBlackList")) $(".v2jun-setting-div .use-black-list").css("display", "none");
   }
   // 设置 icon
   function createIcon() {
@@ -2145,7 +2255,7 @@ function createScriptSetting() {
         "right": "10px",
         "width": iconSize,
         "height": iconSize,
-        "z-index": 9998,
+        "z-index": 9998
       })
       .appendTo("body")
       .click(() => {
@@ -2165,7 +2275,7 @@ function initSetting() {
     const localSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting")) || {};
     const saveSetting = {
       ...defaultSetting,
-      ...localSetting,
+      ...localSetting
     }; // 合并设置，自定义项覆盖默认选项，避免添加新功能时已缓存设置没有新功能相关从而产生bug
     try {
       localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(saveSetting));
@@ -2189,6 +2299,29 @@ function checkLocation() {
 
 /* ================================================== 自定义方法开始 ================================================== */
 
+// 监听评论区加载
+function listenRecontentLoad() {
+  // 评论区首次加载
+  if ($(".recontent").length) {
+    // handleUserBlacklist();
+    getUserSetting("useUserBlackList") && handleUserBlacklist();
+  }
+  // 监听新 .recontent 元素加载，以此判断评论区加载更多是否完成
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if ($(mutation.addedNodes).hasClass("recontent") || 
+          $(mutation.addedNodes).find(".recontent").length) {
+        // handleUserBlacklist();
+        userSetting("useUserBlackList") && handleUserBlacklist();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
 // 加载并执行远程js文件，将其存入 localstorage
 function loadAndExecuteScript(url, loaclStorageKey) {
   return new Promise((resolve, reject) => {
@@ -2221,14 +2354,14 @@ function executeScript(scriptContent) {
 async function getZbPlayUrl(url, callback) {
   if (url.includes("douyin")) {
     const res = await myAjax("https://i.qdqqd.com/", {
-      dyzbjx: url,
+      dyzbjx: url
     });
     if (res?.HD?.length > 0) callback(res.HD);
     else if (res?.LD?.length > 0) callback(res.LD);
     else callback(false);
   } else if (url.includes("kuaishou")) {
     const res = await myAjax("https://i.qdqqd.com/", {
-      kszbjx: url,
+      kszbjx: url
     });
     if (res?.HD?.length > 0) callback(res.HD);
     else if (res?.LD?.length > 0) callback(res.LD);
@@ -2242,25 +2375,25 @@ async function getZbPlayUrl(url, callback) {
 async function getVideoPlayUrl(url, callback) {
   if (url.includes("douyin")) {
     const res = await myAjax("https://i.qdqqd.com/", {
-      dyjx: url,
+      dyjx: url
     });
     if (res?.video?.length > 0) callback(res.video);
     else callback(false);
   } else if (url.includes("kuaishou")) {
     const res = await myAjax("https://i.qdqqd.com/", {
-      ksjx: url,
+      ksjx: url
     });
     if (res?.video?.length > 0) callback(res.video);
     else callback(false);
   } else if (url.includes("bilibili")) {
     const res = await myAjax("https://i.qdqqd.com/", {
-      dyjx: url,
+      dyjx: url
     });
     if (res?.video?.length > 0) callback(res.video);
     else callback(false);
   } else if (url.includes("tiktok")) {
     const res = await myAjax("https://i.qdqqd.com/", {
-      tiktokjx: url,
+      tiktokjx: url
     });
     if (res?.video?.length > 0) callback(res.video);
     else callback(false);
@@ -2279,14 +2412,7 @@ async function getVideoPlayUrl(url, callback) {
  * @param {*} error 失败回调
  * @param {*} options 其他参数
  */
-function uploadFiles({
-  url,
-  type = "POST",
-  data,
-  success = () => { },
-  error = () => { },
-  options = {},
-} = {}) {
+function uploadFiles({ url, type = "POST", data, success = () => {}, error = () => {}, options = {} } = {}) {
   $.ajax({
     url,
     type,
@@ -2316,8 +2442,8 @@ function showInputPopup(inputTitle, callback) {
   for (let i = 0; i < inputTitle.length; i++) {
     const inputBox = $(
       '<div class="v2jun-input-popup-input"><label class="v2jun-input-popup-label">' +
-      inputTitle[i] +
-      '：</label><textarea class="v2jun-input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
+        inputTitle[i] +
+        '：</label><textarea class="v2jun-input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
     );
     popup.append(inputBox);
   }
@@ -2373,9 +2499,10 @@ function scrollToEle(toEle, animateTime = 500) {
   const elementOffset = targetElement.offset().top; // 获取目标元素相对于文档顶部的偏移量
   const offset = elementOffset - windowHeight / 2; // 计算滚动的偏移量
 
-  $("html, body").animate({
-    scrollTop: offset,
-  },
+  $("html, body").animate(
+    {
+      scrollTop: offset
+    },
     animateTime
   ); // 平滑滚动到计算的偏移量位置
 }
@@ -2393,7 +2520,7 @@ function myAjax(url, data, options, type = "get") {
       },
       error: (error) => {
         reject(error);
-      },
+      }
     });
   });
 }
@@ -2446,8 +2573,7 @@ function addCustomStyle() {
   // console.log("%c ===> [ 添加自定义样式 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
   $("<style>").text(customCSS).appendTo("head");
 
-  $("head").append(
-    `<style>.img-thumb{max-width:${getUserSetting("imgThumbWidth")}px;display: block;}`); // 将图片缩小样式添加到页面中
+  $("head").append(`<style>.img-thumb{max-width:${getUserSetting("imgThumbWidth")}px;display: block;}`); // 将图片缩小样式添加到页面中
 }
 /**
  * 防抖
@@ -2477,10 +2603,9 @@ function debounce(func, delay = 800) {
 function insetCustomContent(content, targetEle, notFocus = false) {
   const textarea = $(targetEle); // 获取目标元素
   const textareaContent = textarea.val(); // 获取当前内容
-  if (getUserSetting('textareaAutoFocus') && !notFocus) {
+  if (getUserSetting("textareaAutoFocus") && !notFocus) {
     const cursorPosition = textarea[0].selectionStart; // 获取当前光标位置
-    const newValue = textareaContent.slice(0, cursorPosition) + content + textareaContent.slice(
-      cursorPosition); // 将内容插入当前光标处。如果未选择输入框则插入最后
+    const newValue = textareaContent.slice(0, cursorPosition) + content + textareaContent.slice(cursorPosition); // 将内容插入当前光标处。如果未选择输入框则插入最后
     textarea.val(newValue); // 写入完整内容
     // 将光标移到插入内容的最后
     textarea[0].selectionStart = cursorPosition + content.length;
@@ -2540,7 +2665,7 @@ function getPageContent(path, method = "GET") {
       },
       error: (error) => {
         reject(error);
-      },
+      }
     });
   });
 }
@@ -2559,12 +2684,12 @@ function saveUserSetting(setName, setValue) {
 }
 // 设置获取
 function getUserSetting(name) {
-  // let cacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
-  // console.log("%c ===> [ cacheSetting ] <===", "font-size:13px; background:pink; color:#bf2c9f;", cacheSetting);
-  // return cacheSetting[name];
   try {
-    return JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"))[name];
+    const userSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
+    if (!userSetting) return defaultSetting[name];
+    else return userSetting[name] !== undefined ? userSetting[name] : defaultSetting[name];
   } catch (error) {
+    notifyBox("未知错误，获取用户设置失败", false);
     throw new Error("未知错误，获取设置失败");
   }
 }
@@ -2600,7 +2725,7 @@ function notifyBox(message, status = true, delayTime = 1500) {
       "width": "350px",
       "max-width": "80%",
       "text-align": "center",
-      "z-index": 9999,
+      "z-index": 9999
     })
     .appendTo("body");
   // 消息框创建
@@ -2616,7 +2741,7 @@ function notifyBox(message, status = true, delayTime = 1500) {
       "overflowWrap": "break-word",
       "hyphens": "auto",
       "border-radius": "5px",
-      "max-width": "100%", // 设置消息框的最大宽度
+      "max-width": "100%" // 设置消息框的最大宽度
     })
     .appendTo(containerDiv);
   // 延迟后消息框销毁
