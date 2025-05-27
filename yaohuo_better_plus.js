@@ -764,31 +764,28 @@ const settingIconBase64 =
     userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
     userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, speedEatMoney);
     userSetting["hideXunzhang"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, hideXunzhang);
-    userSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
     executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx(\?.*)?$/i, bookViewBetter);
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuBetter);
     userSetting["useRight"] && useRightNextBtn();
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
-    executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, changeImgSize);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
     userSetting["autoLoadMoreHuifuList"] &&
       executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
-    userSetting['checkVersion'] && checkVersion();
+    userSetting["checkVersion"] && checkVersion();
     listenRecontentLoad();
-    handleUserBlacklist();
   });
 })();
 // 黑名单
-const checkBlackUserIDReqCache = JSON.parse(sessionStorage.getItem('checkBlackUserIDReqCache')) || {};// 缓存请求结果
+const checkBlackUserIDReqCache = JSON.parse(sessionStorage.getItem("checkBlackUserIDReqCache")) || {}; // 缓存请求结果
 function handleUserBlacklist() {
-  const userWhiteIdList = ['1000', '36787', '11637'];// 管理员白名单
+  const userWhiteIdList = ["1000", "36787", "11637"]; // 管理员白名单
 
   const userBlackIdListStr = getUserSetting("userBlackList");
   if (!userBlackIdListStr || userBlackIdListStr.length === 0) return;
-  const userBlackIdList = userBlackIdListStr.split(",").filter(id => !userWhiteIdList.includes(id));
+  const userBlackIdList = userBlackIdListStr.split(",").filter((id) => !userWhiteIdList.includes(id));
 
   // 处理帖子列表
   _handleBookList();
@@ -805,39 +802,40 @@ function handleUserBlacklist() {
       const bookLink = bookItem.find('a[href^="/bbs-"]');
       const bookIDArr = [];
       bookLink.each(function () {
-        const bookId = $(this).attr('href').match(/\/bbs-(\d+)\.html/)?.[1];
+        const bookId = $(this)
+          .attr("href")
+          .match(/\/bbs-(\d+)\.html/)?.[1];
         // console.log("解析到帖子ID:", bookId);
         if (!bookId) return;
         bookIDArr.push(bookId);
       });
       // 请求每个帖子的管理信息，以拿到用户id
-      const requests = bookIDArr.map(id => {
+      const requests = bookIDArr.map((id) => {
         // 检查缓存,如果有缓存就直接返回,大幅提升性能，降低开销
         if (checkBlackUserIDReqCache[id]) {
           return Promise.resolve(checkBlackUserIDReqCache[id]);
         }
 
-        return $.get(`/bbs/Book_View_admin.aspx?id=${id}`)
-          .then(res => {
-            // 缓存结果，避免二次请求造成的性能浪费
-            checkBlackUserIDReqCache[id] = res;
-            try {
-              sessionStorage.setItem('checkBlackUserIDReqCache', JSON.stringify(checkBlackUserIDReqCache));
-            } catch (e) {
-              if (e.name === 'QuotaExceededError') {
-                sessionStorage.removeItem('checkBlackUserIDReqCache');
-                console.warn('存储空间已满,以移除左右旧缓存');
-                sessionStorage.setItem('checkBlackUserIDReqCache', JSON.stringify(checkBlackUserIDReqCache));
-              }
+        return $.get(`/bbs/Book_View_admin.aspx?id=${id}`).then((res) => {
+          // 缓存结果，避免二次请求造成的性能浪费
+          checkBlackUserIDReqCache[id] = res;
+          try {
+            sessionStorage.setItem("checkBlackUserIDReqCache", JSON.stringify(checkBlackUserIDReqCache));
+          } catch (e) {
+            if (e.name === "QuotaExceededError") {
+              sessionStorage.removeItem("checkBlackUserIDReqCache");
+              console.warn("存储空间已满,以移除左右旧缓存");
+              sessionStorage.setItem("checkBlackUserIDReqCache", JSON.stringify(checkBlackUserIDReqCache));
             }
-            return res;
-          });
+          }
+          return res;
+        });
       });
-      Promise.all(requests).then(reqRes => {
+      Promise.all(requests).then((reqRes) => {
         reqRes.forEach((resItem, resItemindex) => {
           const $linksWithUserID = $(resItem).find('a[href*="touserid="]');
           $linksWithUserID.each(function () {
-            const bookUserId = _extractUserId($(this).attr('href'));
+            const bookUserId = _extractUserId($(this).attr("href"));
             // console.log("解析到的用户ID:", bookUserId);
             if (bookUserId && userBlackIdList.includes(bookUserId)) {
               console.log("发现此评论作者在黑名单中,用户ID:", bookUserId);
@@ -847,19 +845,22 @@ function handleUserBlacklist() {
               } else {
                 // 首页
                 // console.log("要移除的帖子序号:", resItemindex + 1);
-                $(bookItem).contents().filter(function () {
-                  const removeIndex = resItemindex + 1;
-                  return this.nodeType === 3 && this.textContent.trim() === removeIndex + '.';
-                }).remove();
+                $(bookItem)
+                  .contents()
+                  .filter(function () {
+                    const removeIndex = resItemindex + 1;
+                    return this.nodeType === 3 && this.textContent.trim() === removeIndex + ".";
+                  })
+                  .remove();
                 // 移除对应的a标签，br标签
                 $(bookItem).find('a[href^="/bbs-"]').eq(resItemindex).remove();
-                $(bookItem).find('br').eq(resItemindex).remove();
+                $(bookItem).find("br").eq(resItemindex).remove();
               }
             }
-          })
-        })
-      })
-    })
+          });
+        });
+      });
+    });
   }
   // 处理评论区
   function _handleComments() {
@@ -870,21 +871,24 @@ function handleUserBlacklist() {
       .recontent .recontent .list-reply`);
     const userLinkSelector = ".user-nick a, .renick a";
     // 一次性查询所有评论，减少DOM操作
-    $(selector).not('.v2jun-check-blocklist-processed').each(function () {
-      const $userLink = $(this).find(userLinkSelector);
-      // 如果找到了用户链接
-      if ($userLink.length && $userLink.length > 0) {
-        const userHref = $userLink.attr("href");
-        const userId = _extractUserId(userHref);
-        // console.log("解析到评论区用户ID:", userId);
-        // 如果用户ID在黑名单中，移除评论
-        if (userId && userBlackIdList.includes(userId)) {
-          console.log("发现此评论作者在黑名单中,用户ID:", userId);
-          $(this).remove();
+    $(selector).not(function(){
+        return $(this).data('v2jun-check-blocklist-processed') === true;
+      }).each(function(){
+        const $userLink = $(this).find(userLinkSelector);
+        // 如果找到了用户链接
+        if ($userLink.length && $userLink.length > 0) {
+          const userHref = $userLink.attr("href");
+          const userId = _extractUserId(userHref);
+          // console.log("解析到评论区用户ID:", userId);
+          // 如果用户ID在黑名单中，移除评论
+          if (userId && userBlackIdList.includes(userId)) {
+            console.log("发现此评论作者在黑名单中,用户ID:", userId);
+            $(this).remove();
+          }
         }
-      }
-      $(this).addClass('v2jun-check-blocklist-processed');
-    });
+        $(this).data('v2jun-check-blocklist-processed', true);
+        // console.log('元素已处理:', $(this).data('v2jun-check-blocklist-processed'));
+      });
   }
 
   // 提取用户ID
@@ -1435,6 +1439,19 @@ function createEmojiHtml(insertEle) {
     attributes: true
   });
 }
+// 图片自动模糊
+function handleImgBlur() {
+  const images = document.querySelectorAll('img'); // 获取所有图片
+  images.forEach(img => {
+      img.style.filter = 'blur(10px)'; // 设置模糊效果
+      img.style.transition = 'filter 0.3s ease'; // 添加过渡效果
+
+      // 添加点击事件移除模糊
+      img.addEventListener('click', function () {
+          img.style.filter = 'none'; // 取消模糊
+      });
+  });
+}
 // 修改图片大小
 function changeImgSize() {
   const imgThumbWidth = getUserSetting("imgThumbWidth"); // 读取用户设置缩放值
@@ -1448,47 +1465,6 @@ function changeImgSize() {
       });
     }
   });
-
-  // 监听评论区域的变化，新增评论时缩放图片
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === "childList") {
-        // 检查新增的节点
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) {
-            // 元素节点
-            // 查找新增节点中的所有图片
-            const imgs = node.getElementsByTagName("img");
-            if (imgs.length > 0) {
-              Array.from(imgs).forEach((img) => {
-                if (!img.dataset.processed) {
-                  if (img.complete) {
-                    handleImageLoad(img);
-                  } else {
-                    img.dataset.processed = "true";
-                    img.addEventListener("load", () => {
-                      handleImageLoad(img);
-                      img.removeEventListener("load", arguments.callee);
-                      delete img.dataset.processed;
-                    });
-                  }
-                }
-              });
-            }
-          }
-        });
-      }
-    });
-  });
-  // 监听评论区域的父元素
-  const replyArea = document.querySelector(".viewContent");
-  if (replyArea) {
-    observer.observe(replyArea, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-  }
 
   $("body").on("click", "img", function (e) {
     if (!imgThumbWidth) return; // 防止设置为 0 时依旧添加点击事件，导致点击后页面内图片丢失
@@ -1506,12 +1482,15 @@ function changeImgSize() {
   }
   // 图片加载完成
   function handleImageLoad(img) {
+    if ($(img).data('v2jun-img-thumb-processed')) return; // 跳过已处理的图片
+
     if (!imgThumbWidth) return; // 设置缩放宽度为 0 时，不缩放
     if ($(img).width() <= 120) return; // 排除论坛自带表情，不缩放
     if ($(img).width() <= imgThumbWidth) return; // 太小的表情，不缩放
     if (shouldExclude(img)) return; // 跳过指定 class 或 id 的图片
 
     $(img).addClass("img-thumb"); // 为页面内所有img标签添加class，修改显示大小
+    $(img).data('v2jun-img-thumb-processed', true); // 标记图片已处理
   }
 }
 // 复读机(回帖+1)
@@ -1964,8 +1943,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>检查更新</span>
             <div class="v2jun-switch">
-              <input name="checkVersion" value="true" ${getUserSetting("checkVersion") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="checkVersion" type="checkbox">
+              <input name="checkVersion" value="true" ${
+                getUserSetting("checkVersion") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="checkVersion" type="checkbox">
               <label class="switch-label" for="checkVersion">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1975,8 +1955,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>一键回到顶部/底部</span>
             <div class="v2jun-switch">
-              <input name="showTopAndDownBtn" value="true" ${getUserSetting("showTopAndDownBtn") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="showTopAndDownBtn" type="checkbox">
+              <input name="showTopAndDownBtn" value="true" ${
+                getUserSetting("showTopAndDownBtn") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="showTopAndDownBtn" type="checkbox">
               <label class="switch-label" for="showTopAndDownBtn">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -1986,8 +1967,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>隐藏楼主勋章</span>
             <div class="v2jun-switch">
-              <input name="hideXunzhang" value="true" ${getUserSetting("hideXunzhang") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="hideXunzhang" type="checkbox">
+              <input name="hideXunzhang" value="true" ${
+                getUserSetting("hideXunzhang") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="hideXunzhang" type="checkbox">
               <label class="switch-label" for="hideXunzhang">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2009,14 +1991,15 @@ function createScriptSetting() {
           <li class="setting-li-between sel-suimo">
             <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床token</a></span>
             <input style="width:100px;" class="v2jun-setting-li-input" value="${getUserSetting(
-        "suimoToken"
-      )}" name="suimoToken" id="suimoToken" type="text" placeholder="为空则不会上传…"/>
+              "suimoToken"
+            )}" name="suimoToken" id="suimoToken" type="text" placeholder="为空则不会上传…"/>
           </li>
           <li class="setting-li-between">
             <span>我要用右手</span>
             <div class="v2jun-switch">
-              <input name="useRight" value="true" ${getUserSetting("useRight") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="useRight" type="checkbox">
+              <input name="useRight" value="true" ${
+                getUserSetting("useRight") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="useRight" type="checkbox">
               <label class="switch-label" for="useRight">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2027,8 +2010,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>帖子自动加载</span>
             <div class="v2jun-switch">
-              <input name="autoLoadMoreBookList" value="true" ${getUserSetting("autoLoadMoreBookList") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
+              <input name="autoLoadMoreBookList" value="true" ${
+                getUserSetting("autoLoadMoreBookList") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
               <label class="switch-label" for="autoLoadMoreBookList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2038,8 +2022,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>回复自动加载</span>
             <div class="v2jun-switch">
-              <input name="autoLoadMoreHuifuList" value="true" ${getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
+              <input name="autoLoadMoreHuifuList" value="true" ${
+                getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
               <label class="switch-label" for="autoLoadMoreHuifuList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2049,8 +2034,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>帖子在弹窗中打开</span>
             <div class="v2jun-switch">
-              <input name="openLayerForBook" value="true" ${getUserSetting("openLayerForBook") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="openLayerForBook" type="checkbox">
+              <input name="openLayerForBook" value="true" ${
+                getUserSetting("openLayerForBook") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="openLayerForBook" type="checkbox">
               <label class="switch-label" for="openLayerForBook">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2061,8 +2047,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>发帖表情自动收起</span>
             <div class="v2jun-switch">
-              <input name="autoCloseBookViewEmoji" value="true" ${getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
+              <input name="autoCloseBookViewEmoji" value="true" ${
+                getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
               <label class="switch-label" for="autoCloseBookViewEmoji">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2072,8 +2059,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>回帖表情自动收起</span>
             <div class="v2jun-switch">
-              <input name="autoCloseHuifuEmoji" value="true" ${getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
+              <input name="autoCloseHuifuEmoji" value="true" ${
+                getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
               <label class="switch-label" for="autoCloseHuifuEmoji">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2083,8 +2071,9 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>输入框自动聚焦</span>
             <div class="v2jun-switch">
-              <input name="textareaAutoFocus" value="true" ${getUserSetting("textareaAutoFocus") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
+              <input name="textareaAutoFocus" value="true" ${
+                getUserSetting("textareaAutoFocus") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
               <label class="switch-label" for="textareaAutoFocus">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2099,8 +2088,9 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting">
             <span>一键吃肉</span>
             <div class="v2jun-switch">
-              <input name="oneClickCollectMoney" value="true" ${getUserSetting("oneClickCollectMoney") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="oneClickCollectMoney" type="checkbox">
+              <input name="oneClickCollectMoney" value="true" ${
+                getUserSetting("oneClickCollectMoney") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="oneClickCollectMoney" type="checkbox">
               <label class="switch-label" for="oneClickCollectMoney">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2110,8 +2100,9 @@ function createScriptSetting() {
           <!--<li class="setting-li-between more-setting">
             <span>吹牛历史查询</span>
             <div class="v2jun-switch">
-              <input name="showChuiniuHistory" value="true" ${getUserSetting("showChuiniuHistory") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="showChuiniuHistory" type="checkbox">
+              <input name="showChuiniuHistory" value="true" ${
+                getUserSetting("showChuiniuHistory") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="showChuiniuHistory" type="checkbox">
               <label class="switch-label" for="showChuiniuHistory">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2121,8 +2112,9 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>复读机(回帖+1)</span>
             <div class="v2jun-switch">
-              <input name="showHuifuCopy" value="true" ${getUserSetting("showHuifuCopy") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="showHuifuCopy" type="checkbox">
+              <input name="showHuifuCopy" value="true" ${
+                getUserSetting("showHuifuCopy") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="showHuifuCopy" type="checkbox">
               <label class="switch-label" for="showHuifuCopy">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2132,8 +2124,9 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>复读机自动提交</span>
             <div class="v2jun-switch">
-              <input name="huifuCopyAutoSubmit" value="true" ${getUserSetting("huifuCopyAutoSubmit") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="huifuCopyAutoSubmit" type="checkbox">
+              <input name="huifuCopyAutoSubmit" value="true" ${
+                getUserSetting("huifuCopyAutoSubmit") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="huifuCopyAutoSubmit" type="checkbox">
               <label class="switch-label" for="huifuCopyAutoSubmit">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2143,8 +2136,9 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>黑名单增强</span>
             <div class="v2jun-switch">
-              <input name="useUserBlackList" value="true" ${getUserSetting("useUserBlackList") ? "checked" : ""
-      }  class="v2jun-switch-checkbox" id="useUserBlackList" type="checkbox">
+              <input name="useUserBlackList" value="true" ${
+                getUserSetting("useUserBlackList") ? "checked" : ""
+              }  class="v2jun-switch-checkbox" id="useUserBlackList" type="checkbox">
               <label class="switch-label" for="useUserBlackList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2154,8 +2148,8 @@ function createScriptSetting() {
           <li class="setting-li-between use-black-list">
             <span>黑名单ID</span>
             <textarea style="width:60%; min-height:40px;resize:vertical" class="v2jun-setting-li-input" name="userBlackList" id="userBlackList" placeholder="输入用户ID，以英文逗号(,)分隔，已自动将论坛管理员加入白名单，为空则不会屏蔽任何人…">${getUserSetting(
-        "userBlackList"
-      )}</textarea>
+              "userBlackList"
+            )}</textarea>
           </li>
         </ul>
         <footer>
@@ -2319,26 +2313,29 @@ function checkLocation() {
 
 // 监听评论区加载
 function listenRecontentLoad() {
-  // 评论区首次加载
   if ($(".recontent").length) {
-    // handleUserBlacklist();
-    getUserSetting("useUserBlackList") && handleUserBlacklist();
+    console.log("======> [ 评论区首次加载 ]");
+    _waitFunc();
   }
   // 监听新 .recontent 元素加载，以此判断评论区加载更多是否完成
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
-      if ($(mutation.addedNodes).hasClass("recontent") ||
-        $(mutation.addedNodes).find(".recontent").length) {
-        // handleUserBlacklist();
-        userSetting("useUserBlackList") && handleUserBlacklist();
+      if ($(mutation.addedNodes).hasClass("recontent") || $(mutation.addedNodes).find(".recontent").length) {
+        console.log("======> [ 评论区加载更多完成  ]");
+        _waitFunc();
       }
     });
   });
-
   observer.observe(document.body, {
     childList: true,
     subtree: true
   });
+
+  function _waitFunc() {
+    getUserSetting("useUserBlackList") && handleUserBlacklist();
+    executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, changeImgSize);
+    getUserSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
+  }
 }
 // 加载并执行远程js文件，将其存入 localstorage
 function loadAndExecuteScript(url, loaclStorageKey) {
@@ -2430,7 +2427,7 @@ async function getVideoPlayUrl(url, callback) {
  * @param {*} error 失败回调
  * @param {*} options 其他参数
  */
-function uploadFiles({ url, type = "POST", data, success = () => { }, error = () => { }, options = {} } = {}) {
+function uploadFiles({ url, type = "POST", data, success = () => {}, error = () => {}, options = {} } = {}) {
   $.ajax({
     url,
     type,
@@ -2460,8 +2457,8 @@ function showInputPopup(inputTitle, callback) {
   for (let i = 0; i < inputTitle.length; i++) {
     const inputBox = $(
       '<div class="v2jun-input-popup-input"><label class="v2jun-input-popup-label">' +
-      inputTitle[i] +
-      '：</label><textarea class="v2jun-input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
+        inputTitle[i] +
+        '：</label><textarea class="v2jun-input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
     );
     popup.append(inputBox);
   }
