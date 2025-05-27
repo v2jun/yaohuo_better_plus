@@ -762,26 +762,27 @@ const settingIconBase64 =
   $(document).ready(() => {
     createScriptSetting();
     userSetting["showTopAndDownBtn"] && addTopAndDown();
-    userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
+    // userSetting["showChuiniuHistory"] && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
     userSetting["oneClickCollectMoney"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, speedEatMoney);
     userSetting["hideXunzhang"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, hideXunzhang);
-    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx(\?.*)?$/i, bookViewBetter);
-    executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuBetter);
-    userSetting["useRight"] && useRightNextBtn();
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
+    executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx(\?.*)?$/i, bookViewBetter);
+    executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuBetter);
     userSetting["autoLoadMoreBookList"] && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
     userSetting["autoLoadMoreHuifuList"] &&
       executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, autoLoadMoreHuifuList);
     userSetting["openLayerForBook"] && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
-    userSetting["checkVersion"] && checkVersion();
+    userSetting["useRight"] && useRightNextBtn();
     listenRecontentLoad();
   });
+  userSetting["checkVersion"] && checkVersion();
 })();
 // 黑名单
 const checkBlackUserIDReqCache = JSON.parse(sessionStorage.getItem("checkBlackUserIDReqCache")) || {}; // 缓存请求结果
 function handleUserBlacklist() {
+  // console.log("开始处理黑名单");
   const userWhiteIdList = ["1000", "36787", "11637"]; // 管理员白名单
 
   const userBlackIdListStr = getUserSetting("userBlackList");
@@ -790,12 +791,12 @@ function handleUserBlacklist() {
 
   // 处理帖子列表
   _handleBookList();
-  // executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, _handlePostList);
   // 处理评论区
   executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _handleComments);
 
   // 处理帖子列表（首页、版块列表、帖子详情页）
-  async function _handleBookList() {
+  function _handleBookList() {
+    // console.log("开始处理帖子列表");
     const bookList = $(".list, .listdata.line1, .listdata.line2");
     bookList.each(function () {
       const bookItem = $(this);
@@ -865,6 +866,7 @@ function handleUserBlacklist() {
   }
   // 处理评论区
   function _handleComments() {
+    // console.log("开始处理评论区");
     const selector = $(`
       .recontent .forum-post,
       .recontent .list-reply,
@@ -2198,6 +2200,10 @@ function createScriptSetting() {
     $(".v2jun-setting-div .v2jun-clear-setting").click((e) => {
       localStorage.removeItem("yaohuoBetterPlusSetting");
       localStorage.removeItem("jquery-3.7.1.min");
+      sessionStorage.removeItem("checkBlackUserIDReqCache");
+
+      notifyBox('重置成功');
+
       setTimeout(() => {
         window.location.reload();
       }, 300);
@@ -2317,10 +2323,7 @@ function checkLocation() {
 
 // 监听评论区加载
 function listenRecontentLoad() {
-  if ($(".recontent").length) {
-    console.log("======> [ 评论区首次加载 ]");
-    _waitFunc();
-  }
+  _waitFunc();
   // 监听新 .recontent 元素加载，以此判断评论区加载更多是否完成
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
@@ -2336,6 +2339,7 @@ function listenRecontentLoad() {
   });
 
   function _waitFunc() {
+    console.log("useUserBlackList", getUserSetting("useUserBlackList"));
     getUserSetting("useUserBlackList") && handleUserBlacklist();
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, imgCustomProcess);
     getUserSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
@@ -2631,7 +2635,9 @@ function insetCustomContent(content, targetEle, notFocus = false) {
     textarea[0].selectionEnd = cursorPosition + content.length;
     textarea.focus();
 
-    getUserSetting("autoCloseBookViewUbb") &&
+    console.log('autoCloseBookViewEmoji', getUserSetting("autoCloseBookViewEmoji"));
+    console.log('autoCloseHuifuEmoji', getUserSetting("autoCloseHuifuEmoji"));
+    getUserSetting("autoCloseBookViewEmoji") &&
       $(".v2jun-emojilist-div.bookview-emoji").css("display", "none") &&
       $(".v2jun-custom-toggle-btn.view-emoji-toggle").text("表情 展开") &&
       saveUserSetting("showBookViewEmoji", false);
