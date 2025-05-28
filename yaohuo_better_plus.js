@@ -782,9 +782,11 @@ const settingIconBase64 =
 // 黑名单
 const checkBlackUserIDReqCache = JSON.parse(sessionStorage.getItem("checkBlackUserIDReqCache")) || {}; // 缓存请求结果
 function handleUserBlacklist() {
+  // 生成拉黑按钮
+  executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _add_black_btn);
+  
   // console.log("开始处理黑名单");
   const userWhiteIdList = ["1000", "36787", "11637"]; // 管理员白名单
-
   const userBlackIdListStr = getUserSetting("userBlackList");
   if (!userBlackIdListStr || userBlackIdListStr.length === 0) return;
   const userBlackIdList = userBlackIdListStr.split(",").filter((id) => !userWhiteIdList.includes(id));
@@ -793,8 +795,6 @@ function handleUserBlacklist() {
   _handleBookList();
   // 处理评论区
   executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _handleComments);
-  // 生成拉黑按钮
-  executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _add_black_btn);
 
   // 生成拉黑按钮
   function _add_black_btn() {
