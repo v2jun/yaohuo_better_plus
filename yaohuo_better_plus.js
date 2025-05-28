@@ -793,7 +793,57 @@ function handleUserBlacklist() {
   _handleBookList();
   // 处理评论区
   executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _handleComments);
+  // 生成拉黑按钮
+  executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _add_black_btn);
 
+  // 生成拉黑按钮
+  function _add_black_btn() {
+    // console.log("开始添加黑名单按钮");
+
+    // 处理楼主
+    const lzblackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
+    $('.louzhuxinxi.subtitle .louzhu .online').after(lzblackBtnEle);
+    lzblackBtnEle.click(() => {
+      console.log("点击了加入黑名单按钮");
+      const userHref = $('.louzhuxinxi.subtitle .louzhu').find('.louzhunicheng a').attr('href');
+      console.log('获取到的用户ID:', _extractUserId(userHref));
+      _addToStorage(_extractUserId(userHref));
+    });
+
+    // 处理评论区
+    const isNewHuifu = $(".recontent .forum-post").length > 0;
+    if (isNewHuifu) {
+      // 新版回帖
+      $(".recontent .forum-post .post-header .user-name").each(function () {
+        const blackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
+        blackBtnEle.click(() => {
+          const userHref = $(this).closest('.forum-post .post-header .user-name').find('.user-id a').attr('href');
+          _addToStorage(_extractUserId(userHref));
+        });
+        $(this).append(blackBtnEle);
+      });
+    } else {
+      // 旧版回帖
+      $(".recontent .reline.list-reply .recolon").each(function () {
+        const blackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
+        blackBtnEle.click(() => {
+          // console.log("点击了加入黑名单按钮");
+          // 获取父级下类名为 renick 里的 a 标签的 href
+          const userHref = $(this).closest('.reline.list-reply').find('.renick a').attr('href');
+          // console.log('获取到的用户ID:', _extractUserId(userHref));
+          _addToStorage(_extractUserId(userHref));
+        });
+        $(this).prepend(blackBtnEle);
+      });
+    }
+
+    function _addToStorage(userid) {
+      const cacheBlackList = getUserSetting("userBlackList");
+      saveUserSetting("userBlackList", `${cacheBlackList},${userid}`);
+      notifyBox("已将用户ID: " + userid + " 加入黑名单", "success");
+      // location.reload();
+    }
+  }
   // 处理帖子列表（首页、版块列表、帖子详情页）
   function _handleBookList() {
     // console.log("开始处理帖子列表");
@@ -885,7 +935,7 @@ function handleUserBlacklist() {
         // console.log("解析到评论区用户ID:", userId);
         // 如果用户ID在黑名单中，移除评论
         if (userId && userBlackIdList.includes(userId)) {
-          console.log("发现此评论作者在黑名单中,用户ID:", userId);
+          // console.log("发现此评论作者在黑名单中,用户ID:", userId);
           $(this).remove();
         }
       }
@@ -2339,7 +2389,7 @@ function listenRecontentLoad() {
   });
 
   function _waitFunc() {
-    console.log("useUserBlackList", getUserSetting("useUserBlackList"));
+    // console.log("useUserBlackList", getUserSetting("useUserBlackList"));
     getUserSetting("useUserBlackList") && handleUserBlacklist();
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, imgCustomProcess);
     getUserSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
