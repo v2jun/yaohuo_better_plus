@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.7.4
+// @version         1.7.5
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.7.4", // 脚本版本
+  version: "1.7.5", // 脚本版本
   checkVersion: true, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
@@ -392,6 +392,13 @@ const customCSS = `
     color: #fff;
     border-radius: 5px;
     padding: 5px 10px;
+  }
+  .v2jun-popup-setting-import,.v2jun-popup-setting-export{
+    background-color: #666;
+    color: #fff;
+    border-radius: 5px;
+    padding: 5px 30px;
+    letter-spacing: 2px;
   }
 `;
 // 表情
@@ -784,7 +791,7 @@ const checkBlackUserIDReqCache = JSON.parse(sessionStorage.getItem("checkBlackUs
 function handleUserBlacklist() {
   // 生成拉黑按钮
   executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*|\/bbs\/book_re\.aspx\?.*)$/i, _add_black_btn);
-  
+
   // console.log("开始处理黑名单");
   const userWhiteIdList = ["1000", "36787", "11637"]; // 管理员白名单
   const userBlackIdListStr = getUserSetting("userBlackList");
@@ -804,9 +811,10 @@ function handleUserBlacklist() {
     const lzblackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
     $('.louzhuxinxi.subtitle .louzhu .online').after(lzblackBtnEle);
     lzblackBtnEle.click(() => {
-      console.log("点击了加入黑名单按钮");
+      // console.log("点击了加入黑名单按钮");
+      if (!confirm('确定要将该用户加入黑名单吗？')) return;
       const userHref = $('.louzhuxinxi.subtitle .louzhu').find('.louzhunicheng a').attr('href');
-      console.log('获取到的用户ID:', _extractUserId(userHref));
+      // console.log('获取到的用户ID:', _extractUserId(userHref));
       _addToStorage(_extractUserId(userHref));
     });
 
@@ -817,6 +825,7 @@ function handleUserBlacklist() {
       $(".recontent .forum-post .post-header .user-name").each(function () {
         const blackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
         blackBtnEle.click(() => {
+          if (!confirm('确定要将该用户加入黑名单吗？')) return;
           const userHref = $(this).closest('.forum-post .post-header .user-name').find('.user-id a').attr('href');
           _addToStorage(_extractUserId(userHref));
         });
@@ -828,6 +837,7 @@ function handleUserBlacklist() {
         const blackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
         blackBtnEle.click(() => {
           // console.log("点击了加入黑名单按钮");
+          if (!confirm('确定要将该用户加入黑名单吗？')) return;
           // 获取父级下类名为 renick 里的 a 标签的 href
           const userHref = $(this).closest('.reline.list-reply').find('.renick a').attr('href');
           // console.log('获取到的用户ID:', _extractUserId(userHref));
@@ -839,7 +849,8 @@ function handleUserBlacklist() {
 
     function _addToStorage(userid) {
       const cacheBlackList = getUserSetting("userBlackList");
-      saveUserSetting("userBlackList", `${cacheBlackList},${userid}`);
+      if (!cacheBlackList) saveUserSetting("userBlackList", userid);
+      else saveUserSetting("userBlackList", `${cacheBlackList},${userid}`);
       notifyBox("已将用户ID: " + userid + " 加入黑名单", "success");
       // location.reload();
     }
@@ -953,6 +964,64 @@ function handleUserBlacklist() {
     const match = url.match(/[to|main]userid=(\d+)/);
     return match ? match[1] : null;
   }
+}
+// 导入导出配置
+function importWithExportSetting() {
+  // 导出JSON配置文件
+  function exportJson() {
+    const userCacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
+    // console.log("导出配置:", userCacheSetting); return;
+    const jsonString = JSON.stringify(userCacheSetting, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'yaohuoBetterPlusSetting.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  // 导入JSON配置文件
+  function importJson() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/json';
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importConfig = JSON.parse(e.target.result);
+          // console.log('导入的配置:', importConfig);
+          const userCacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
+          // console.log("当前配置:", userCacheSetting);          
+          const mergedConfig = { ...userCacheSetting, ...importConfig };// 合并配置
+          // console.log('合并后的配置:', mergedConfig);          
+          localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(mergedConfig));// 保存合并后的配置
+
+          notifyBox("导入成功", "success", 1000);
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        } catch (error) {
+          // console.error('解析JSON失败:', error);
+          notifyBox("未知错误，导入失败,请检查配置文件格式是否正确", false, 3000);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+  }
+  return {
+    exportJson,
+    importJson
+  };
 }
 // 检查更新
 function checkVersion() {
@@ -1090,8 +1159,16 @@ function useRightNextBtn() {
   if (!btBox.length) return;
   const links = btBox.children("a");
   if (links.length !== 2) return;
-  // 直接修改按钮的顺序
-  btBox.append(links.get().reverse());
+  // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
+  const firstBtnText = links.eq(0).text().trim();
+  const secondBtnText = links.eq(1).text().trim();
+  if (firstBtnText !== "下一页" || secondBtnText !== "上一页") return;
+  // 克隆元素以保留事件绑定
+  const clonedLinks = links.map(function () {
+    return $(this).clone(true)[0];
+  }).get();
+  // 清空容器并按相反顺序添加克隆的元素
+  btBox.empty().append(clonedLinks.reverse());
 }
 // 回帖 增强
 function huifuBetter() {
@@ -2209,7 +2286,10 @@ function createScriptSetting() {
           </li>
         </ul>
         <footer>
-          <hr>
+          <hr style='margin-bottom:6px;'>
+          <span class="v2jun-popup-setting-import">导入配置</span>
+          <span class="v2jun-popup-setting-export">导出配置</span>
+          <hr style='margin-top:6px;'>
           <span class="v2jun-setting-cancel-btn">取消</span>
           <span class="v2jun-setting-confirm-btn">保存</span>
         </footer>
@@ -2258,6 +2338,16 @@ function createScriptSetting() {
         window.location.reload();
       }, 300);
     });
+    // 导入配置
+    $(".v2jun-setting-div .v2jun-popup-setting-import").click((e) => {
+      // console.log('导入配置');
+      importWithExportSetting().importJson();
+    });
+    // 导出配置
+    $(".v2jun-setting-div .v2jun-popup-setting-export").click((e) => {
+      // console.log('导出配置');
+      importWithExportSetting().exportJson();
+    })
     // 取消按钮
     $(".v2jun-setting-div .v2jun-setting-cancel-btn").click(closePopupContainer);
     // 提交按钮
@@ -2281,7 +2371,12 @@ function createScriptSetting() {
           } else if ($(this).is("select")) {
             formData[this.name] = parseFloat(this.value);
           } else {
-            formData[this.name] = this.value;
+            if (this.name == "userBlackList") {
+              // 对字符串进行处理，将中文"，"替换为英文","，防止误输入中文逗号导致的解析错误
+              formData[this.name] = this.value.replace(/，/g, ',');
+            } else {
+              formData[this.name] = this.value;
+            }
           }
         });
       console.log(formData);
@@ -2378,7 +2473,7 @@ function listenRecontentLoad() {
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       if ($(mutation.addedNodes).hasClass("recontent") || $(mutation.addedNodes).find(".recontent").length) {
-        console.log("======> [ 评论区加载更多完成  ]");
+        // console.log("======> [ 评论区加载更多完成  ]");
         _waitFunc();
       }
     });
@@ -2389,10 +2484,9 @@ function listenRecontentLoad() {
   });
 
   function _waitFunc() {
-    // console.log("useUserBlackList", getUserSetting("useUserBlackList"));
     getUserSetting("useUserBlackList") && handleUserBlacklist();
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, imgCustomProcess);
-    getUserSetting["showHuifuCopy"] && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
+    getUserSetting("showHuifuCopy") && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?id=\d+.*)$/i, huifuCopy);
   }
 }
 // 加载并执行远程js文件，将其存入 localstorage
