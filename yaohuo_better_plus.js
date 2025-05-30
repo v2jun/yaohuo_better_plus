@@ -60,7 +60,8 @@ const defaultSetting = {
   showHuifuCopy: false, // 复读机(回复+1)
   huifuCopyAutoSubmit: false, // 复读机自动提交
   useUserBlackList: false, // 使用用户黑名单
-  userBlackList: "" // 黑名单,填入用户ID即可屏蔽帖子和回复
+  userBlackList: "", // 黑名单,填入用户ID即可屏蔽帖子和回复
+  userCustomEmojiList: "" // 自定义表情,填入表情代码即可使用
 };
 // 自定义样式
 const customCSS = `
@@ -796,7 +797,7 @@ function handleUserBlacklist() {
   const userWhiteIdList = ["1000", "36787", "11637"]; // 管理员白名单
   const userBlackIdListStr = getUserSetting("userBlackList");
   if (!userBlackIdListStr || userBlackIdListStr.length === 0) return;
-  const userBlackIdList = userBlackIdListStr.split(",").filter((id) => !userWhiteIdList.includes(id));
+  const userBlackIdList = userBlackIdListStr.split(",").filter((id) => id.trim() !== "" && !userWhiteIdList.includes(id));
 
   // 处理帖子列表
   _handleBookList();
@@ -1117,7 +1118,7 @@ function autoLoadMoreHuifuList() {
     // 检查是否滚动到距离底部400px，并且还没有触发过点击事件
     if (documentHeight - (scrollTop + windowHeight) <= 500 && !hasTriggered) {
       // 自动点击加载更多按钮
-      console.log("%c ===> [ 自动点击加载回复 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
+      // console.log("%c ===> [ 自动点击加载回复 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
       loadMoreButton.click();
       // 设置标志位为已触发
       hasTriggered = true;
@@ -1463,6 +1464,9 @@ function createUbbHtml(insertEle) {
 }
 // 表情 节点
 function createEmojiHtml(insertEle) {
+  const userCacheEmojiList = getUserSetting("userCustomEmojiList").split(',').filter(item => item.trim() !== '');
+  const allEmojiList = [...emojiList, ...userCacheEmojiList];
+  console.log("allEmojiList:", allEmojiList);
   // 计算每行能放几个表情
   const containerWidth = $(".v2jun-emojilist-div").width();
   const emojiWidth = 50; // 表情宽度(包含间距)
@@ -1470,14 +1474,14 @@ function createEmojiHtml(insertEle) {
   const rowsPerPage = 5; // 每页显示5行
   const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量
   let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting("bookviewEmojiPage") : getUserSetting("huifuEmojiPage")); // 获取缓存的页码
-  const totalPages = Math.ceil(emojiList.length / pageSize); // 总页数
+  const totalPages = Math.ceil(allEmojiList.length / pageSize); // 总页数
   // 确保页码在有效范围内
   currentPage = Math.min(Math.max(currentPage, 1), totalPages);
 
   function loadEmojis(page) {
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
-    const currentEmojis = emojiList.slice(start, end);
+    const currentEmojis = allEmojiList.slice(start, end);
 
     const emojiListHtml = [];
     currentEmojis.forEach((faceitem) => {
@@ -2234,6 +2238,12 @@ function createScriptSetting() {
               </label>
             </div>
           </li>
+          <li class="setting-li-between more-setting">
+            <span>自定义表情包</span>
+            <textarea style="width:60%; min-height:50px;resize:vertical" class="v2jun-setting-li-input" name="userCustomEmojiList" id="userCustomEmojiList" placeholder="输入表情包链接，以英文逗号(,)分隔…">${getUserSetting(
+        "userCustomEmojiList"
+      )}</textarea>
+          </li>
           <!--<li class="setting-li-between more-setting">
             <span>吹牛历史查询</span>
             <div class="v2jun-switch">
@@ -2280,7 +2290,7 @@ function createScriptSetting() {
           </li>
           <li class="setting-li-between extra-setting use-black-list" style="display:none;">
             <span>黑名单ID</span>
-            <textarea style="width:60%; min-height:40px;resize:vertical" class="v2jun-setting-li-input" name="userBlackList" id="userBlackList" placeholder="输入用户ID，以英文逗号(,)分隔，已自动将论坛管理员加入白名单，为空则不会屏蔽任何人…">${getUserSetting(
+            <textarea style="width:60%; min-height:50px;resize:vertical" class="v2jun-setting-li-input" name="userBlackList" id="userBlackList" placeholder="输入用户ID，以英文逗号(,)分隔，已自动将论坛管理员加入白名单，为空则不会屏蔽任何人…">${getUserSetting(
         "userBlackList"
       )}</textarea>
           </li>
@@ -2374,12 +2384,14 @@ function createScriptSetting() {
             if (this.name == "userBlackList") {
               // 对字符串进行处理，将中文"，"替换为英文","，防止误输入中文逗号导致的解析错误
               formData[this.name] = this.value.replace(/，/g, ',');
+            } else if (this.name == 'userCustomEmojiList') {
+              formData[this.name] = this.value.replace(/，/g, ',');
             } else {
               formData[this.name] = this.value;
             }
           }
         });
-      console.log(formData);
+      // console.log(formData);
       const cacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
       for (const key of Object.keys(formData)) {
         cacheSetting[key] = formData[key];
