@@ -1156,20 +1156,34 @@ function autoLoadMoreBookList() {
 }
 // 上一页，下一页按钮互换位置
 function useRightNextBtn() {
-  const btBox = $(".btBox .bt2");
-  if (!btBox.length) return;
-  const links = btBox.children("a");
-  if (links.length !== 2) return;
-  // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
-  const firstBtnText = links.eq(0).text().trim();
-  const secondBtnText = links.eq(1).text().trim();
-  if (firstBtnText !== "下一页" || secondBtnText !== "上一页") return;
-  // 克隆元素以保留事件绑定
-  const clonedLinks = links.map(function () {
-    return $(this).clone(true)[0];
-  }).get();
-  // 清空容器并按相反顺序添加克隆的元素
-  btBox.empty().append(clonedLinks.reverse());
+  function executeWithRetry(retryCount = 0) {
+    try {
+      const btBox = $(".btBox .bt2");
+      if (!btBox.length) return;
+      const links = btBox.children("a");
+      if (links.length !== 2) return;
+      // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
+      const firstBtnText = links.eq(0).text().trim();
+      const secondBtnText = links.eq(1).text().trim();
+      if (firstBtnText !== "下一页" || secondBtnText !== "上一页") return;
+      // 克隆元素以保留事件绑定
+      const clonedLinks = links.map(function () {
+        return $(this).clone(true)[0];
+      }).get();
+      // 清空容器并按相反顺序添加克隆的元素
+      btBox.empty().append(clonedLinks.reverse());
+    } catch (error) {
+      // 指定时间后重试，避免网络波动执行失败
+      if (retryCount < 5) {
+        // console.log(`执行失败，正在进行第 ${retryCount + 1} 次重试...`);
+        retryCount++;
+        setTimeout(executeWithRetry(retryCount + 1), 1000 * retryCount);
+      } else {
+        console.error('达到最大重试次数，执行失败:', error);
+      }
+    }
+  }
+  executeWithRetry();
 }
 // 回帖 增强
 function huifuBetter() {
