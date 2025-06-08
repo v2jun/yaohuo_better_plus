@@ -748,8 +748,6 @@ const settingIconBase64 =
 /* ================================================== 变量结束 ================================================== */
 
 (async function () {
-  "use strict";
-
   if (!checkLocation()) return;
 
   const jqueryIsLoad = await loadAndExecuteScript("https://code.jquery.com/jquery-3.7.1.min.js", "jquery-3.7.1.min");
@@ -765,6 +763,7 @@ const settingIconBase64 =
     saveUserSetting("firstLoadScript", false);
   }
 
+  userSetting["checkVersion"] && checkVersion();
   addCustomStyle();
   // 页面解析完成后再执行代码，否则 jquery 可能会获取不到 document 内容导致脚本执行失败
   $(document).ready(() => {
@@ -785,7 +784,6 @@ const settingIconBase64 =
     userSetting["useRight"] && useRightNextBtn();
     listenRecontentLoad();
   });
-  userSetting["checkVersion"] && checkVersion();
 })();
 // 黑名单
 const checkBlackUserIDReqCache = JSON.parse(sessionStorage.getItem("checkBlackUserIDReqCache")) || {}; // 缓存请求结果
@@ -1174,10 +1172,10 @@ function useRightNextBtn() {
       btBox.empty().append(clonedLinks.reverse());
     } catch (error) {
       // 指定时间后重试，避免网络波动执行失败
-      if (retryCount < 5) {
-        // console.log(`执行失败，正在进行第 ${retryCount + 1} 次重试...`);
+      if (retryCount < 10) {
+        console.log(`执行失败，正在进行第 ${retryCount + 1} 次重试...`);
         retryCount++;
-        setTimeout(executeWithRetry(retryCount + 1), 1000 * retryCount);
+        setTimeout(executeWithRetry(retryCount + 1), 500 * retryCount);
       } else {
         console.error('达到最大重试次数，执行失败:', error);
       }
@@ -2464,7 +2462,7 @@ function createScriptSetting() {
 
 // 初始化本地设置文件(存放于localStorage，清除浏览器缓存会让设置失效)
 function initSetting() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const localSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting")) || {};
     const saveSetting = {
       ...defaultSetting,
@@ -2476,7 +2474,7 @@ function initSetting() {
       resolve(true);
     } catch (error) {
       notifyBox("未知错误，初始化设置失败，请联系作者反馈bug…");
-      reject(false);
+      resolve(false);
     }
   });
 }
@@ -2517,7 +2515,7 @@ function listenRecontentLoad() {
 }
 // 加载并执行远程js文件，将其存入 localstorage
 function loadAndExecuteScript(url, loaclStorageKey) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const cacheScript = localStorage.getItem(loaclStorageKey);
     if (cacheScript && cacheScript.length > 0) {
       executeScript(cacheScript); // 执行缓存 js
@@ -2532,7 +2530,7 @@ function loadAndExecuteScript(url, loaclStorageKey) {
         })
         .catch((err) => {
           notifyBox("未知错误，Jquery 加载失败，请刷新重试…", false);
-          reject(false);
+          resolve(false);
         });
     }
   });
