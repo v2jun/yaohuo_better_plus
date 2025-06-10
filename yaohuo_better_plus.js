@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.7.5
+// @version         1.7.6
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,8 +21,8 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.7.5", // 脚本版本
-  checkVersion: true, // 检查更新
+  version: "1.7.6", // 脚本版本
+  checkVersion: false, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
   showSettingIcon: true, // 显示设置 logo
@@ -757,6 +757,10 @@ const settingIconBase64 =
   if (!setttingIsInit) return;
 
   const userSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
+  if (!userSetting || !Array.isArray(userSetting)) {
+    notifyBox('未知错误，加载用户设置失败',false)
+    return;
+  }
 
   if (userSetting["firstLoadScript"]) {
     alert("请合理/合法使用本脚本，不要影响论坛正常看帖/回帖！！！如因使用本脚本而被封号/小黑屋，雨我无瓜(免责声明.jpg)");
@@ -795,7 +799,8 @@ function handleUserBlacklist() {
   const userWhiteIdList = ["1000", "36787", "11637"]; // 管理员白名单
   const userBlackIdListStr = getUserSetting("userBlackList");
   if (!userBlackIdListStr || userBlackIdListStr.length === 0) return;
-  const userBlackIdList = userBlackIdListStr.split(",").filter((id) => id.trim() !== "" && !userWhiteIdList.includes(id));
+  let userBlackIdList = userBlackIdListStr.split(",").filter((id) => id.trim() !== "" && !userWhiteIdList.includes(id));
+  if (!Array.isArray(userBlackIdList)) userBlackIdList = [];
 
   // 处理帖子列表
   _handleBookList();
@@ -1154,34 +1159,36 @@ function autoLoadMoreBookList() {
 }
 // 上一页，下一页按钮互换位置
 function useRightNextBtn() {
-  function executeWithRetry(retryCount = 0) {
-    try {
-      const btBox = $(".btBox .bt2");
-      if (!btBox.length) return;
-      const links = btBox.children("a");
-      if (links.length !== 2) return;
-      // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
-      const firstBtnText = links.eq(0).text().trim();
-      const secondBtnText = links.eq(1).text().trim();
-      if (firstBtnText !== "下一页" || secondBtnText !== "上一页") return;
-      // 克隆元素以保留事件绑定
-      const clonedLinks = links.map(function () {
-        return $(this).clone(true)[0];
-      }).get();
-      // 清空容器并按相反顺序添加克隆的元素
-      btBox.empty().append(clonedLinks.reverse());
-    } catch (error) {
-      // 指定时间后重试，避免网络波动执行失败
-      if (retryCount < 10) {
-        console.log(`执行失败，正在进行第 ${retryCount + 1} 次重试...`);
-        retryCount++;
-        setTimeout(executeWithRetry(retryCount + 1), 500 * retryCount);
-      } else {
-        console.error('达到最大重试次数，执行失败:', error);
-      }
+  function _executeWithRetry(retryCount = 0) {
+    if(retryCount > 10) return;// 最多重试10次
+    const btBox = $(".btBox .bt2");
+    if (!btBox.length) {
+      retryCount++;
+      setTimeout(executeWithRetry(retryCount + 1), 500);
+      return;
     }
+    const links = btBox.children("a");
+    if (links.length !== 2) {
+      retryCount++;
+      setTimeout(executeWithRetry(retryCount + 1), 500 * retryCount);
+      return;
+    }
+    // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
+    const firstBtnText = links.eq(0).text().trim();
+    const secondBtnText = links.eq(1).text().trim();
+    if (firstBtnText !== "下一页" || secondBtnText !== "上一页") {
+      retryCount++;
+      setTimeout(executeWithRetry(retryCount + 1), 500 * retryCount);
+      return;
+    }
+    // 克隆元素以保留事件绑定
+    const clonedLinks = links.map(function () {
+      return $(this).clone(true)[0];
+    }).get();
+    // 清空容器并按相反顺序添加克隆的元素
+    btBox.empty().append(clonedLinks.reverse());
   }
-  executeWithRetry();
+  _executeWithRetry();
 }
 // 回帖 增强
 function huifuBetter() {
@@ -1476,7 +1483,8 @@ function createUbbHtml(insertEle) {
 }
 // 表情 节点
 function createEmojiHtml(insertEle) {
-  const userCacheEmojiList = getUserSetting("userCustomEmojiList").split(',').filter(item => item.trim() !== '');
+  let userCacheEmojiList = getUserSetting("userCustomEmojiList").split(',').filter(item => item.trim() !== '');
+  if (!Array.isArray(userCacheEmojiList)) userCacheEmojiList = [];
   const allEmojiList = [...emojiList, ...userCacheEmojiList];
   console.log("allEmojiList:", allEmojiList);
   // 计算每行能放几个表情
@@ -1485,10 +1493,9 @@ function createEmojiHtml(insertEle) {
   const emojisPerRow = Math.floor(containerWidth / emojiWidth);
   const rowsPerPage = 5; // 每页显示5行
   const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量
-  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting("bookviewEmojiPage") : getUserSetting("huifuEmojiPage")); // 获取缓存的页码
+  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting("bookviewEmojiPage") : getUserSetting("huifuEmojiPage")) || 1; // 获取缓存的页码
   const totalPages = Math.ceil(allEmojiList.length / pageSize); // 总页数
-  // 确保页码在有效范围内
-  currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  currentPage = Math.min(Math.max(currentPage, 1), totalPages);// 确保页码在有效范围内
 
   function loadEmojis(page) {
     const start = (page - 1) * pageSize;
