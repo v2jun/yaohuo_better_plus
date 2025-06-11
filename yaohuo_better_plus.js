@@ -765,12 +765,12 @@ const settingIconBase64 =
     return;
   }
 
-  if (userSetting["firstLoadScript"]) {
+  if (userSetting?.firstLoadScript) {
     alert("请合理/合法使用本脚本，不要影响论坛正常看帖/回帖！！！如因使用本脚本而被封号/小黑屋，雨我无瓜(免责声明.jpg)");
     saveUserSetting("firstLoadScript", false);
   }
 
-  userSetting["checkVersion"] && checkVersion();
+  userSetting?.checkVersion && checkVersion();
   addCustomStyle();
   // 页面解析完成后再执行代码，否则 jquery 可能会获取不到 document 内容导致脚本执行失败
   $(document).ready(() => {
@@ -2528,14 +2528,14 @@ function listenRecontentLoad() {
 function loadAndExecuteScript(url, loaclStorageKey) {
   return new Promise((resolve) => {
     const cacheScript = localStorage.getItem(loaclStorageKey);
-    if (cacheScript && cacheScript.length > 0) {
-      executeScript(cacheScript); // 执行缓存 js
+    if (cacheScript?.length > 0) {
+      _executeScript(cacheScript); // 执行缓存 js
       resolve(true);
     } else {
       fetch(url) // 加载远程 js
         .then((response) => response.text())
         .then((fetchScriptContent) => {
-          executeScript(fetchScriptContent);
+          _executeScript(fetchScriptContent);
           localStorage.setItem(loaclStorageKey, fetchScriptContent);
           resolve(true);
         })
@@ -2545,12 +2545,13 @@ function loadAndExecuteScript(url, loaclStorageKey) {
         });
     }
   });
-}
-// 执行指定内容 js 代码
-function executeScript(scriptContent) {
-  const script = document.createElement("script"); // 创建script元素
-  script.text = scriptContent; // 设置脚本内容
-  document.head.appendChild(script); // 执行脚本
+
+  // 执行指定内容 js 代码
+  function _executeScript(scriptContent) {
+    const script = document.createElement("script"); // 创建script元素
+    script.text = scriptContent; // 设置脚本内容
+    document.head.appendChild(script); // 执行脚本
+  }
 }
 // 解析直播url
 async function getZbPlayUrl(url, callback) {
