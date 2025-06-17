@@ -49,7 +49,7 @@ const defaultSetting = {
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
   openLayerForBook: false, // pc 端帖子在弹窗中打开
 
-  imgUploadApiUrl: ["https://aapi.helioho.st/upload.php", "https://img.ink/api/upload"],
+  imgUploadApiUrl: ["https://aapi.helioho.st/upload.php", "https://img.ink/api/upload", 'https://tc.qdqqd.com/uploadtg'],
   imgUploadSelOpt: 0, // 使用图床
   suimoToken: "", // 水墨图床 token
   textareaAutoFocus: true, // 输入框自动获取焦点
@@ -206,7 +206,7 @@ const customCSS = `
     padding:0 10px;
     text-align:center;
     color:#fff;
-    margin:0 10px 0 20px;
+    margin:0 10px 0 5px;
     background-color: #407088;
     border-radius: 5px;
     white-space:nowrap;
@@ -671,7 +671,6 @@ const ubbList = [
     inputTitle: ["图片链接"],
     ubbHandle: (inputValues) => `[img]${inputValues[0]}[/img]`
   },
-  // { name: "短链生成" },
   {
     ubbType: "uploadImg",
     name: "图片(上传)",
@@ -687,22 +686,25 @@ const ubbList = [
     inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
     ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`
   },
-  // {
-  //   ubbType: "uploadFile",
-  //   name: "视频(上传)",
-  //   inputTitle: ["视频外链(未能找到合适的文件站，如有可提供给我)"],
-  //   ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
-  //   upload: {
-  //     type: "movie",
-  //     // accept: "video/*",
-  //     accept: "*",
-  //   },
-  // },
+  {
+    ubbType: "uploadVideo",
+    name: "视频(上传)",
+    ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    upload: {
+      type: "movie",
+      accept: "video/*"
+    },
+  },
   {
     ubbType: "input",
     name: "音频(外链)",
     inputTitle: ["音频外链(未能找到合适的文件站，如有可提供给我)"],
-    ubbHandle: (inputValues) => `[movie]${inputValues[0]}[/movie]`,
+    ubbHandle: (inputValues) => `[audio]${inputValues[0]}[/audio]`,
+  },
+  {
+    ubbType: "uploadAudio",
+    name: "音频(上传)",
+    ubbHandle: (inputValues) => `[audio]${inputValues[0]}[/audio]`,
     upload: {
       type: "audio",
       accept: "audio/*"
@@ -1168,8 +1170,7 @@ function useRightNextBtn() {
     if (retryCount >= 10) return; // 最多重试10次
     const btBox = $(".btBox .bt2");
     if (!btBox.length) {
-      retryCount++;
-      setTimeout(_executeWithRetry(retryCount + 1), 500);
+      setTimeout(() => _executeWithRetry(retryCount + 1), 500);
       return;
     }
     const links = btBox.children("a");
@@ -1177,16 +1178,13 @@ function useRightNextBtn() {
     const firstBtnText = links.eq(0).text().trim();
     const secondBtnText = links.eq(1).text().trim();
     if (firstBtnText !== "下一页" || secondBtnText !== "上一页") {
-      retryCount++;
-      setTimeout(_executeWithRetry(retryCount + 1), 500 * retryCount);
+      setTimeout(() => _executeWithRetry(retryCount + 1), 500);
       return;
     }
     // 克隆元素以保留事件绑定
-    const clonedLinks = links
-      .map(function () {
-        return $(this).clone(true)[0];
-      })
-      .get();
+    const clonedLinks = links.map(function () {
+      return $(this).clone(true)[0];
+    }).get();
     // 清空容器并按相反顺序添加克隆的元素
     btBox.empty().append(clonedLinks.reverse());
   }
@@ -1374,7 +1372,7 @@ function createUbbHtml(insertEle) {
         });
       } else if (ubbType == "uploadImg") {
         // 点击隐藏的上传选择文件按钮
-        $(`.v2jun-ubblist-div #upload-${upload.type}`).click();
+        $(`.v2jun-ubblist-div #upload-${upload.type}`).off("click").click();
         // 文件选择回调事件
         $(`.v2jun-ubblist-div #upload-${upload.type}`)
           .off("input")
@@ -1385,7 +1383,7 @@ function createUbbHtml(insertEle) {
               notifyBox("请选择图片", false);
               return;
             }
-            if (tempFiles.length > 10) {
+            if (tempFiles?.length > 10) {
               notifyBox("一次最多选择 10 张图片", false);
               return;
             }
@@ -1420,14 +1418,23 @@ function createUbbHtml(insertEle) {
                 uploadNextImage();
                 return;
               }
+
               const data = new FormData();
-              data.append("image", currentImg);
+              if (getUserSetting("imgUploadSelOpt") == 2) data.append("file", currentImg);
+              else data.append("image", currentImg);
+
               uploadFiles({
                 url,
                 data,
                 options,
                 success: (res) => {
-                  const { code, msg, data } = res;
+                  if (getUserSetting("imgUploadSelOpt") == 2 && res?.data?.length > 0) {
+                    res.code = 200;
+                    let url = res.data;
+                    res.data = {};
+                    res.data.url = url;
+                  }
+                  const { code, data } = res;
                   if (code == 200) {
                     uploadCount.success++;
                     insetCustomContent(ubbHandle([data.url]), insertEle);
@@ -1441,20 +1448,20 @@ function createUbbHtml(insertEle) {
                   }
                   // 继续上传下一张
                   uploadCount.currentIndex++;
-                  uploadNextImage();
+                  setTimeout(() => uploadNextImage(), 500);
                 },
                 error: (err) => {
                   notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
                   uploadCount.currentIndex++;
                   uploadCount.fail++;
-                  uploadNextImage();
+                  setTimeout(() => uploadNextImage(), 500);
                 }
               });
             };
             // 开始上传第一张图片
             uploadNextImage();
           });
-      } else if (ubbType == "uploadFile") {
+      } else if (ubbType == "uploadVideo" || ubbType == "uploadAudio") {
         // 点击隐藏的上传选择文件按钮
         $(`.v2jun-ubblist-div #upload-${upload.type}`).click();
         // 文件选择回调事件
@@ -1472,8 +1479,60 @@ function createUbbHtml(insertEle) {
               return;
             }
 
-            for (const file of tempFiles) {
-            }
+            showWaitBox("上传中…"); // 上传等待提示
+            let uploadCount = { currentIndex: 0, success: 0, fail: 0 }; // 存储上传结果数量
+            const uploadNextFile = () => {
+              if (uploadCount.currentIndex >= tempFiles.length) {
+                // 所有图片上传完成
+                setTimeout(() => {
+                  $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
+                }, 1000);
+                setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 1500);
+                $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
+                return;
+              }
+
+              const url = defaultSetting.imgUploadApiUrl[2];
+              const currentFile = tempFiles[uploadCount.currentIndex];
+              // 检查文件大小是否超过20MB
+              if (currentFile.size > 20 * 1024 * 1024) {
+                notifyBox(`第 ${uploadCount.currentIndex + 1} 个文件过大，已跳过`, false, 300);
+                uploadCount.fail++;
+                uploadCount.currentIndex++;
+                setTimeout(() => uploadNextFile(), 500);
+                return;
+              }
+
+              const data = new FormData();
+              data.append("file", currentFile);
+
+              uploadFiles({
+                url,
+                data,
+                success: (res) => {
+                  if (res?.data?.length > 0) {
+                    uploadCount.success++;
+                    insetCustomContent(ubbHandle([res.data]), insertEle);
+
+                    if (tempFiles.length > 1) {
+                      notifyBox(`第 ${uploadCount.currentIndex + 1} 个文件已上传成功`, true, 200);
+                    }
+                  } else {
+                    uploadCount.fail++;
+                    notifyBox(`第 ${uploadCount.currentIndex + 1} 个文件上传失败`, false, 300);
+                  }
+                  uploadCount.currentIndex++;
+                  setTimeout(() => uploadNextFile(), 500);
+                },
+                error: () => {
+                  notifyBox(`第 ${uploadCount.currentIndex + 1} 个文件上传失败`, false, 300);
+                  uploadCount.currentIndex++;
+                  uploadCount.fail++;
+                  setTimeout(() => uploadNextFile(), 500);
+                }
+              });
+            };
+            uploadNextFile();
           });
       }
     });
@@ -2110,9 +2169,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>一键回到顶部/底部</span>
             <div class="v2jun-switch">
-              <input name="showTopAndDownBtn" value="true" ${
-                getUserSetting("showTopAndDownBtn") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="showTopAndDownBtn" type="checkbox">
+              <input name="showTopAndDownBtn" value="true" ${getUserSetting("showTopAndDownBtn") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="showTopAndDownBtn" type="checkbox">
               <label class="switch-label" for="showTopAndDownBtn">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2148,15 +2206,16 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>图床选择</span>
             <select name='imgUploadSelOpt' class="v2jun-reset" style="font-size: 12px;width:116px;padding-left:8px;height:25px;">
-              <option value="0" ${getUserSetting("imgUploadSelOpt") == 0 ? "selected" : ""}>美团</option>
-              <option value="1" ${getUserSetting("imgUploadSelOpt") == 1 ? "selected" : ""}>水墨</option>
+              <option value="0" ${getUserSetting("imgUploadSelOpt") == 0 ? "selected" : ""}>美团图床</option>
+              <option value="1" ${getUserSetting("imgUploadSelOpt") == 1 ? "selected" : ""}>水墨图床</option>
+              <option value="2" ${getUserSetting("imgUploadSelOpt") == 2 ? "selected" : ""}>柯艺云图床</option>
             </select>
           </li>
           <li class="setting-li-between sel-suimo">
             <span><a href="https://img.ink/user/settings.html" target="_blank">水墨图床token</a></span>
             <input style="width:100px;" class="v2jun-setting-li-input" value="${getUserSetting(
-              "suimoToken"
-            )}" name="suimoToken" id="suimoToken" type="text" placeholder="为空则不会上传…"/>
+        "suimoToken"
+      )}" name="suimoToken" id="suimoToken" type="text" placeholder="为空则不会上传…"/>
           </li>
           <li class="setting-li-between">
             <span>我要用右手</span>
@@ -2172,9 +2231,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>帖子自动加载</span>
             <div class="v2jun-switch">
-              <input name="autoLoadMoreBookList" value="true" ${
-                getUserSetting("autoLoadMoreBookList") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
+              <input name="autoLoadMoreBookList" value="true" ${getUserSetting("autoLoadMoreBookList") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="autoLoadMoreBookList" type="checkbox">
               <label class="switch-label" for="autoLoadMoreBookList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2184,9 +2242,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>回复自动加载</span>
             <div class="v2jun-switch">
-              <input name="autoLoadMoreHuifuList" value="true" ${
-                getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
+              <input name="autoLoadMoreHuifuList" value="true" ${getUserSetting("autoLoadMoreHuifuList") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="autoLoadMoreHuifuList" type="checkbox">
               <label class="switch-label" for="autoLoadMoreHuifuList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2196,9 +2253,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>帖子在弹窗中打开</span>
             <div class="v2jun-switch">
-              <input name="openLayerForBook" value="true" ${
-                getUserSetting("openLayerForBook") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="openLayerForBook" type="checkbox">
+              <input name="openLayerForBook" value="true" ${getUserSetting("openLayerForBook") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="openLayerForBook" type="checkbox">
               <label class="switch-label" for="openLayerForBook">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2209,9 +2265,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>发帖表情自动收起</span>
             <div class="v2jun-switch">
-              <input name="autoCloseBookViewEmoji" value="true" ${
-                getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
+              <input name="autoCloseBookViewEmoji" value="true" ${getUserSetting("autoCloseBookViewEmoji") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="autoCloseBookViewEmoji" type="checkbox">
               <label class="switch-label" for="autoCloseBookViewEmoji">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2221,9 +2276,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>回帖表情自动收起</span>
             <div class="v2jun-switch">
-              <input name="autoCloseHuifuEmoji" value="true" ${
-                getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
+              <input name="autoCloseHuifuEmoji" value="true" ${getUserSetting("autoCloseHuifuEmoji") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="autoCloseHuifuEmoji" type="checkbox">
               <label class="switch-label" for="autoCloseHuifuEmoji">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2233,9 +2287,8 @@ function createScriptSetting() {
           <li class="setting-li-between">
             <span>输入框自动聚焦</span>
             <div class="v2jun-switch">
-              <input name="textareaAutoFocus" value="true" ${
-                getUserSetting("textareaAutoFocus") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
+              <input name="textareaAutoFocus" value="true" ${getUserSetting("textareaAutoFocus") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="textareaAutoFocus" type="checkbox">
               <label class="switch-label" for="textareaAutoFocus">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2250,9 +2303,8 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting">
             <span>一键吃肉</span>
             <div class="v2jun-switch">
-              <input name="oneClickCollectMoney" value="true" ${
-                getUserSetting("oneClickCollectMoney") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="oneClickCollectMoney" type="checkbox">
+              <input name="oneClickCollectMoney" value="true" ${getUserSetting("oneClickCollectMoney") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="oneClickCollectMoney" type="checkbox">
               <label class="switch-label" for="oneClickCollectMoney">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2262,15 +2314,14 @@ function createScriptSetting() {
           <li class="setting-li-between more-setting">
             <span>自定义表情包</span>
             <textarea style="width:60%; min-height:50px;resize:vertical" class="v2jun-setting-li-input" name="userCustomEmojiList" id="userCustomEmojiList" placeholder="输入表情包链接，以英文逗号(,)分隔…">${getUserSetting(
-              "userCustomEmojiList"
-            )}</textarea>
+        "userCustomEmojiList"
+      )}</textarea>
           </li>
           <!--<li class="setting-li-between more-setting">
             <span>吹牛历史查询</span>
             <div class="v2jun-switch">
-              <input name="showChuiniuHistory" value="true" ${
-                getUserSetting("showChuiniuHistory") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="showChuiniuHistory" type="checkbox">
+              <input name="showChuiniuHistory" value="true" ${getUserSetting("showChuiniuHistory") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="showChuiniuHistory" type="checkbox">
               <label class="switch-label" for="showChuiniuHistory">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2290,9 +2341,8 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>复读机自动提交</span>
             <div class="v2jun-switch">
-              <input name="huifuCopyAutoSubmit" value="true" ${
-                getUserSetting("huifuCopyAutoSubmit") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="huifuCopyAutoSubmit" type="checkbox">
+              <input name="huifuCopyAutoSubmit" value="true" ${getUserSetting("huifuCopyAutoSubmit") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="huifuCopyAutoSubmit" type="checkbox">
               <label class="switch-label" for="huifuCopyAutoSubmit">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2302,9 +2352,8 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting" style="display:none;">
             <span>黑名单增强</span>
             <div class="v2jun-switch">
-              <input name="useUserBlackList" value="true" ${
-                getUserSetting("useUserBlackList") ? "checked" : ""
-              }  class="v2jun-switch-checkbox" id="useUserBlackList" type="checkbox">
+              <input name="useUserBlackList" value="true" ${getUserSetting("useUserBlackList") ? "checked" : ""
+      }  class="v2jun-switch-checkbox" id="useUserBlackList" type="checkbox">
               <label class="switch-label" for="useUserBlackList">
                 <span class="v2jun-switch-inner" data-on="开" data-off="关"></span>
                 <span class="v2jun-switch-handle"></span>
@@ -2314,8 +2363,8 @@ function createScriptSetting() {
           <li class="setting-li-between extra-setting use-black-list" style="display:none;">
             <span>黑名单ID</span>
             <textarea style="width:60%; min-height:50px;resize:vertical" class="v2jun-setting-li-input" name="userBlackList" id="userBlackList" placeholder="输入用户ID，以英文逗号(,)分隔，已自动将论坛管理员加入白名单，为空则不会屏蔽任何人…">${getUserSetting(
-              "userBlackList"
-            )}</textarea>
+        "userBlackList"
+      )}</textarea>
           </li>
         </ul>
         <footer>
@@ -2339,8 +2388,8 @@ function createScriptSetting() {
         console.log(changeEventName, changeEventValue);
 
         if (changeEventName === "imgUploadSelOpt") {
-          if (changeEventValue == 0) $(".v2jun-setting-div .sel-suimo").css("display", "none");
-          else if (changeEventValue == 1) $(".v2jun-setting-div .sel-suimo").show();
+          if (changeEventValue == 1) $(".v2jun-setting-div .sel-suimo").show();
+          else $(".v2jun-setting-div .sel-suimo").css("display", "none");
         } else if (changeEventName === "useUserBlackList") {
           $(".v2jun-setting-div .use-black-list").css("display", $(this).prop("checked") ? "flex" : "none");
         }
@@ -2503,11 +2552,14 @@ function checkLocation() {
 
 // 监听评论区加载
 function listenRecontentLoad() {
-  _waitFunc();
   // 监听新 .recontent 元素加载，以此判断评论区加载更多是否完成
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
-      if ($(mutation.addedNodes).hasClass("recontent") || $(mutation.addedNodes).find(".recontent").length) {
+      const addedNodes = $(mutation.addedNodes);
+      if (addedNodes.hasClass("recontent") || 
+          addedNodes.find(".recontent").length ||
+          addedNodes.hasClass("reline list-reply") ||
+          addedNodes.find(".reline.list-reply").length) {
         // console.log("======> [ 评论区加载更多完成  ]");
         _waitFunc();
       }
@@ -2517,12 +2569,13 @@ function listenRecontentLoad() {
     childList: true,
     subtree: true
   });
-
+  // 需要执行的函数
   function _waitFunc() {
     getUserSetting("useUserBlackList") && handleUserBlacklist();
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, imgCustomProcess);
     getUserSetting("showHuifuCopy") && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, huifuCopy);
   }
+  _waitFunc();
 }
 // 加载并执行远程js文件，将其存入 localstorage
 function loadAndExecuteScript(url, loaclStorageKey) {
@@ -2615,7 +2668,7 @@ async function getVideoPlayUrl(url, callback) {
  * @param {*} error 失败回调
  * @param {*} options 其他参数
  */
-function uploadFiles({ url, type = "POST", data, success = () => {}, error = () => {}, options = {} } = {}) {
+function uploadFiles({ url, type = "POST", data, success = () => { }, error = () => { }, options = {} } = {}) {
   $.ajax({
     url,
     type,
@@ -2645,8 +2698,8 @@ function showInputPopup(inputTitle, callback) {
   for (let i = 0; i < inputTitle.length; i++) {
     const inputBox = $(
       '<div class="v2jun-input-popup-input"><label class="v2jun-input-popup-label">' +
-        inputTitle[i] +
-        '：</label><textarea class="v2jun-input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
+      inputTitle[i] +
+      '：</label><textarea class="v2jun-input-popup-textarea" rows="2" placeholder="请输入..."></textarea></div>'
     );
     popup.append(inputBox);
   }
