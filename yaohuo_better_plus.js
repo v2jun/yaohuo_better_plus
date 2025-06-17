@@ -206,7 +206,7 @@ const customCSS = `
     padding:0 10px;
     text-align:center;
     color:#fff;
-    margin:0 10px 0 20px;
+    margin:0 10px 0 5px;
     background-color: #407088;
     border-radius: 5px;
     white-space:nowrap;
@@ -2552,11 +2552,14 @@ function checkLocation() {
 
 // 监听评论区加载
 function listenRecontentLoad() {
-  _waitFunc();
   // 监听新 .recontent 元素加载，以此判断评论区加载更多是否完成
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
-      if ($(mutation.addedNodes).hasClass("recontent") || $(mutation.addedNodes).find(".recontent").length) {
+      const addedNodes = $(mutation.addedNodes);
+      if (addedNodes.hasClass("recontent") || 
+          addedNodes.find(".recontent").length ||
+          addedNodes.hasClass("reline list-reply") ||
+          addedNodes.find(".reline.list-reply").length) {
         // console.log("======> [ 评论区加载更多完成  ]");
         _waitFunc();
       }
@@ -2566,12 +2569,13 @@ function listenRecontentLoad() {
     childList: true,
     subtree: true
   });
-
+  // 需要执行的函数
   function _waitFunc() {
     getUserSetting("useUserBlackList") && handleUserBlacklist();
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, imgCustomProcess);
     getUserSetting("showHuifuCopy") && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, huifuCopy);
   }
+  _waitFunc();
 }
 // 加载并执行远程js文件，将其存入 localstorage
 function loadAndExecuteScript(url, loaclStorageKey) {
