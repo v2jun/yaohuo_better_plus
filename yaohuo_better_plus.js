@@ -831,6 +831,9 @@ function handleUserBlacklist() {
     if (isNewHuifu) {
       // 新版回帖
       $(".recontent .forum-post .post-header .user-name").each(function () {
+        // 检查是否已处理过
+        if ($(this).data("v2jun-black-btn-processed") === true) return;
+
         const blackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
         blackBtnEle.click(() => {
           if (!confirm("确定要将该用户加入黑名单吗？")) return;
@@ -838,10 +841,15 @@ function handleUserBlacklist() {
           _addToStorage(_extractUserId(userHref));
         });
         $(this).append(blackBtnEle);
+        // 标记为已处理
+        $(this).data("v2jun-black-btn-processed", true);
       });
     } else {
       // 旧版回帖
       $(".recontent .reline.list-reply .recolon").each(function () {
+        // 检查是否已处理过
+        if ($(this).data("v2jun-black-btn-processed") === true) return;
+
         const blackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
         blackBtnEle.click(() => {
           // console.log("点击了加入黑名单按钮");
@@ -852,6 +860,8 @@ function handleUserBlacklist() {
           _addToStorage(_extractUserId(userHref));
         });
         $(this).prepend(blackBtnEle);
+        // 标记为已处理
+        $(this).data("v2jun-black-btn-processed", true);
       });
     }
 
@@ -943,26 +953,24 @@ function handleUserBlacklist() {
       .recontent .recontent .list-reply`);
     const userLinkSelector = ".user-nick a, .renick a";
     // 一次性查询所有评论，减少DOM操作
-    $(selector)
-      .not(function () {
-        return $(this).data("v2jun-check-blocklist-processed") === true;
-      })
-      .each(function () {
-        const $userLink = $(this).find(userLinkSelector);
-        // 如果找到了用户链接
-        if ($userLink.length && $userLink.length > 0) {
-          const userHref = $userLink.attr("href");
-          const userId = _extractUserId(userHref);
-          // console.log("解析到评论区用户ID:", userId);
-          // 如果用户ID在黑名单中，移除评论
-          if (userId && userBlackIdList.includes(userId)) {
-            // console.log("发现此评论作者在黑名单中,用户ID:", userId);
-            $(this).remove();
-          }
+    $(selector).not(function () {
+      return $(this).data("v2jun-check-blocklist-processed") === true;
+    }).each(function () {
+      const $userLink = $(this).find(userLinkSelector);
+      // 如果找到了用户链接
+      if ($userLink.length && $userLink.length > 0) {
+        const userHref = $userLink.attr("href");
+        const userId = _extractUserId(userHref);
+        // console.log("解析到评论区用户ID:", userId);
+        // 如果用户ID在黑名单中，移除评论
+        if (userId && userBlackIdList.includes(userId)) {
+          // console.log("发现此评论作者在黑名单中,用户ID:", userId);
+          $(this).remove();
         }
-        $(this).data("v2jun-check-blocklist-processed", true);
-        // console.log('元素已处理:', $(this).data('v2jun-check-blocklist-processed'));
-      });
+      }
+      $(this).data("v2jun-check-blocklist-processed", true);
+      // console.log('元素已处理:', $(this).data('v2jun-check-blocklist-processed'));
+    });
   }
 
   // 提取用户ID
@@ -1716,7 +1724,10 @@ function huifuCopy() {
   const isNewHuifu = $(".recontent .forum-post .admin-actions").length > 0;
   if (isNewHuifu) {
     // 新版回帖
-    $(".recontent .forum-post .admin-actions").each(function () {
+    $(".recontent .forum-post .post-content .retext").each(function () {
+      // 检查是否已经处理过，如果处理过则跳过
+      if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
+
       const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
       $(this).append(copySpanEle);
       copySpanEle.click((e) => {
@@ -1728,12 +1739,17 @@ function huifuCopy() {
           getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
         }, 150);
       });
+      // 添加标识，标记为已处理
+      $(this).attr("v2jun-data-huifu-copy-processed", "true");
     });
   } else {
     // 旧版回帖
-    $(".recontent .reline.list-reply .redate").each(function () {
+    $(".recontent .list-reply .retext").each(function () {
+      // 检查是否已经处理过，如果处理过则跳过
+      if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
+      
       const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
-      $(this).prepend(copySpanEle);
+      $(this).after(copySpanEle);
       copySpanEle.click((e) => {
         e.stopPropagation();
         const copyText = _handleHtml($(this).closest(".reline.list-reply").find(".retext").html());
@@ -1743,6 +1759,8 @@ function huifuCopy() {
           getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
         }, 150);
       });
+      // 标记为已处理
+      $(this).attr("v2jun-data-huifu-copy-processed", "true");
     });
   }
   function _handleHtml(retextHtml) {
@@ -2556,10 +2574,10 @@ function listenRecontentLoad() {
   const observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       const addedNodes = $(mutation.addedNodes);
-      if (addedNodes.hasClass("recontent") || 
-          addedNodes.find(".recontent").length ||
-          addedNodes.hasClass("reline list-reply") ||
-          addedNodes.find(".reline.list-reply").length) {
+      if (addedNodes.hasClass("recontent") ||
+        addedNodes.find(".recontent").length ||
+        addedNodes.hasClass("reline list-reply") ||
+        addedNodes.find(".reline.list-reply").length) {
         // console.log("======> [ 评论区加载更多完成  ]");
         _waitFunc();
       }
