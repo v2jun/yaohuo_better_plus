@@ -816,15 +816,20 @@ function handleUserBlacklist() {
     // console.log("开始添加黑名单按钮");
 
     // 处理楼主
-    const lzblackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
-    $(".louzhuxinxi.subtitle .louzhu .online").after(lzblackBtnEle);
-    lzblackBtnEle.click(() => {
-      // console.log("点击了加入黑名单按钮");
-      if (!confirm("确定要将该用户加入黑名单吗？")) return;
-      const userHref = $(".louzhuxinxi.subtitle .louzhu").find(".louzhunicheng a").attr("href");
-      // console.log('获取到的用户ID:', _extractUserId(userHref));
-      _addToStorage(_extractUserId(userHref));
-    });
+    const lzBlackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
+    const louzhuEle = $(".louzhuxinxi.subtitle .louzhu .online");
+    if (louzhuEle.data('v2jun-data-louzhu-block-list') !== true) {
+      louzhuEle.after(lzBlackBtnEle);
+      lzBlackBtnEle.click(() => {
+        // console.log("点击了加入黑名单按钮");
+        if (!confirm("确定要将该用户加入黑名单吗？")) return;
+        const userHref = $(".louzhuxinxi.subtitle .louzhu").find(".louzhunicheng a").attr("href");
+        // console.log('获取到的用户ID:', _extractUserId(userHref));
+        _addToStorage(_extractUserId(userHref));
+      });
+      louzhuEle.data("v2jun-black-btn-processed", true);
+    }
+
 
     // 处理评论区
     const isNewHuifu = $(".recontent .forum-post").length > 0;
@@ -846,7 +851,7 @@ function handleUserBlacklist() {
       });
     } else {
       // 旧版回帖
-      $(".recontent .reline.list-reply .recolon").each(function () {
+      $(".recontent .list-reply .renick").each(function () {
         // 检查是否已处理过
         if ($(this).data("v2jun-black-btn-processed") === true) return;
 
@@ -859,7 +864,7 @@ function handleUserBlacklist() {
           // console.log('获取到的用户ID:', _extractUserId(userHref));
           _addToStorage(_extractUserId(userHref));
         });
-        $(this).prepend(blackBtnEle);
+        $(this).after(blackBtnEle);
         // 标记为已处理
         $(this).data("v2jun-black-btn-processed", true);
       });
@@ -1747,7 +1752,7 @@ function huifuCopy() {
     $(".recontent .list-reply .retext").each(function () {
       // 检查是否已经处理过，如果处理过则跳过
       if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
-      
+
       const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
       $(this).after(copySpanEle);
       copySpanEle.click((e) => {
