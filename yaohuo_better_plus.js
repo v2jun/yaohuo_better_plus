@@ -49,7 +49,7 @@ const defaultSetting = {
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
   openLayerForBook: false, // pc 端帖子在弹窗中打开
 
-  imgUploadApiUrl: ["https://aapi.helioho.st/upload.php", "https://img.ink/api/upload", 'https://tc.qdqqd.com/uploadtg'],
+  imgUploadApiUrl: ["https://mtbed.netsons.org/upload.php", "https://img.ink/api/upload", 'https://tc.qdqqd.com/uploadtg'],
   imgUploadSelOpt: 0, // 使用图床
   suimoToken: "", // 水墨图床 token
   textareaAutoFocus: true, // 输入框自动获取焦点
@@ -628,6 +628,11 @@ const ubbList = [
     name: "代码",
     inputTitle: ["代码内容"],
     ubbHandle: (inputValues) => `[code]${inputValues[0]}[/code]`
+  }, {
+    ubbType: "input",
+    name: "MarkDown",
+    inputTitle: ["内容"],
+    ubbHandle: (inputValues) => `[md]\n\n${inputValues[0]}\n\n[/md]`
   },
   {
     ubbType: "input",
@@ -818,7 +823,7 @@ function handleUserBlacklist() {
     // 处理楼主
     const lzBlackBtnEle = $("<span style='color:red;margin-left:10px;'>(加入黑名单)</span>");
     const louzhuEle = $(".louzhuxinxi.subtitle .louzhu .online");
-    if (louzhuEle.data('v2jun-data-louzhu-block-list') !== true) {
+    if (louzhuEle.data('v2jun-data-louzhu-black-processed') !== true) {
       louzhuEle.after(lzBlackBtnEle);
       lzBlackBtnEle.click(() => {
         // console.log("点击了加入黑名单按钮");
@@ -827,7 +832,7 @@ function handleUserBlacklist() {
         // console.log('获取到的用户ID:', _extractUserId(userHref));
         _addToStorage(_extractUserId(userHref));
       });
-      louzhuEle.data("v2jun-black-btn-processed", true);
+      louzhuEle.data("v2jun-data-louzhu-black-processed", true);
     }
 
 
@@ -1261,14 +1266,6 @@ function bookViewBetter() {
 
   if (isBookViewMod) {
     // 修改帖子
-    $("label").each(function () {
-      const labelContent = $(this).html();
-      if (labelContent == "内容") {
-        $(this).replaceWith(`
-            <div class="content-header"><label>内容</label><div class="textarea-actions"></div>
-          `);
-      }
-    });
     $(".upload-container .form-group .textarea-actions").append(toggleEle);
   } else {
     // 发布帖子
@@ -2601,7 +2598,7 @@ function listenRecontentLoad() {
   _waitFunc();
 }
 // 加载并执行远程js文件，将其存入 localstorage
-function loadAndExecuteScript(url, loaclStorageKey) {
+function loadAndExecuteScript2(url, loaclStorageKey) {
   return new Promise((resolve) => {
     const cacheScript = localStorage.getItem(loaclStorageKey);
     if (cacheScript?.length > 0) {
@@ -2627,6 +2624,43 @@ function loadAndExecuteScript(url, loaclStorageKey) {
     const script = document.createElement("script"); // 创建script元素
     script.text = scriptContent; // 设置脚本内容
     document.head.appendChild(script); // 执行脚本
+  }
+}
+// 加载并执行远程js文件，将其存入 localstorage
+function loadAndExecuteScript(url, loaclStorageKey) {
+  return new Promise((resolve) => {
+    // 对于jQuery，先检查window.jQuery对象是否已存在
+    if (/jquery/i.test(url) && window.jQuery) {
+      console.log('======> [ jQuery 已存在，无需重复加载 ]');
+      resolve(true);
+      return;
+    }
+    
+    const cacheScript = localStorage.getItem(loaclStorageKey);
+    if (cacheScript?.length > 0) {
+      _executeScript(cacheScript); // 执行缓存 js
+      resolve(true);
+    } else {
+      fetch(url) // 加载远程 js
+        .then((response) => response.text())
+        .then((fetchScriptContent) => {
+          _executeScript(fetchScriptContent);
+          localStorage.setItem(loaclStorageKey, fetchScriptContent);
+          resolve(true);
+        })
+        .catch((err) => {
+          notifyBox("未知错误，Jquery 加载失败，请刷新重试…", false);
+          resolve(false);
+        });
+    }
+  });
+
+  // 执行指定内容 js 代码
+  function _executeScript(scriptContent) {
+    const script = document.createElement("script"); // 创建script元素
+    script.text = scriptContent; // 设置脚本内容
+    document.head.appendChild(script); // 执行脚本
+    // console.log('jQuery 成功加载');
   }
 }
 // 解析直播url
@@ -2861,7 +2895,7 @@ function addCustomStyle() {
  * @returns
  */
 function debounce(func, delay = 800) {
-  console.log("%c ===> [ 节流函数开始运行 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
+  console.log("%c ===> [ 防抖函数开始运行 ] <===", "font-size:13px; background:pink; color:#bf2c9f;");
   let timeoutId;
 
   return function () {
