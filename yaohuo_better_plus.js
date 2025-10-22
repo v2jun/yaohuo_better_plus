@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.8.1
+// @version         1.8.2
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.8.1", // 脚本版本
+  version: "1.8.2", // 脚本版本
   checkVersion: false, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
@@ -37,10 +37,13 @@ const defaultSetting = {
 
   showHuifuUbb: false, // 回帖 ubb 展开
   showHuifuEmoji: false, // 回帖表情展开
+  showMsgUbb: false,// 信箱 ubb 展开
+  showMsgEmoji: false,// 信箱表情展开
   // autoCloseHuifuUbb:false,// 发帖 ubb 点击后自动关闭
   autoCloseHuifuEmoji: false, // 发帖表情点击后自动关闭
   bookviewEmojiPage: 1, // 发帖表情分页页码
   huifuEmojiPage: 1, // 回帖表情分页页码
+  msgEmojiPage: 1, // 信箱表情分页页码
 
   imgBlur: false, // 图片模糊
   imgThumbWidth: 200, // 图片缩小后显示宽度
@@ -781,6 +784,7 @@ const settingIconBase64 =
     // userSettingCache?.showChuiniuHistory && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
     userSettingCache?.oneClickCollectMoney && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, speedEatMoney);
     userSettingCache?.hideXunzhang && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, hideXunzhang);
+    userSettingCache?.openLayerForBook && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
@@ -788,8 +792,8 @@ const settingIconBase64 =
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, huifuBetter);
     userSettingCache?.autoLoadMoreBookList && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
     userSettingCache?.autoLoadMoreHuifuList && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, autoLoadMoreHuifuList);
-    userSettingCache?.openLayerForBook && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
     userSettingCache?.useRight && executeFunctionForURL(/^\/bbs\/book.*$/i, useRightNextBtn);
+    executeFunctionForURL("/bbs/messagelist_view.aspx", messageBetter);
     listenRecontentLoad();
   });
 })();
@@ -1178,14 +1182,8 @@ function autoLoadMoreBookList() {
 }
 // 上一页，下一页按钮互换位置
 function useRightNextBtn() {
-  function _executeWithRetry(retryCount = 0) {
-    // console.log("%c ===> [ useRightNextBtn ] <===", "font-size:13px; background:pink; color:#bf2c9f;", retryCount + 1);
-    if (retryCount >= 10) return; // 最多重试10次
+  waitForElement(".content .upload-image-btn", () => {
     const btBox = $(".btBox .bt2");
-    if (!btBox.length) {
-      setTimeout(() => _executeWithRetry(retryCount + 1), 500);
-      return;
-    }
     const links = btBox.children("a");
     // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
     const firstBtnText = links.eq(0).text().trim();
@@ -1200,106 +1198,150 @@ function useRightNextBtn() {
     }).get();
     // 清空容器并按相反顺序添加克隆的元素
     btBox.empty().append(clonedLinks.reverse());
-  }
-  _executeWithRetry();
+  });
+}
+// 信箱增强
+function messageBetter() {
+  waitForElement(".content .upload-image-btn", () => {
+    const ubbToggleEle = $(`<span class="v2jun-custom-toggle-btn v2jun-msg-ubb-toggle">${getUserSetting("showMsgUbb") ? "UBB 折叠" : "UBB 展开"}</span>`);
+    $(".content .upload-image-btn").before(ubbToggleEle);
+    ubbToggleEle.click(function () {
+      $(".v2jun-ubblist-div").toggle();
+      const showMsgUbb = getUserSetting("showMsgUbb");
+      if (showMsgUbb) {
+        saveUserSetting("showMsgUbb", false);
+        $(this).text("UBB 展开");
+      } else {
+        saveUserSetting("showMsgUbb", true);
+        $(this).text("UBB 折叠");
+      }
+    });
+
+    const emojiToggleEle = $(`<span class='v2jun-custom-toggle-btn v2jun-msg-emoji-toggle'>${getUserSetting("showMsgEmoji") ? "表情 折叠" : "表情 展开"}</span>`);
+    $(".content .upload-image-btn").before(emojiToggleEle);
+    emojiToggleEle.click(function () {
+      $(".v2jun-emojilist-div").toggle();
+      const showMsgEmoji = getUserSetting("showMsgEmoji");
+      if (showMsgEmoji) {
+        saveUserSetting("showMsgEmoji", false);
+        $(this).text("表情 展开");
+      } else {
+        saveUserSetting("showMsgEmoji", true);
+        $(this).text("表情 折叠");
+      }
+    });
+
+    $(".mmscontent").before('<div class="v2jun-ubblist-div v2jun-msg-ubb"></div>');
+    createUbbHtml(".mmscontent");
+    $(".mmscontent").before('<div class="v2jun-emojilist-div v2jun-msg-emoji"></div>');
+    createEmojiHtml(".mmscontent");
+
+    !getUserSetting("showMsgUbb") && $(".v2jun-ubblist-div.v2jun-msg-ubb").css("display", "none");
+    !getUserSetting("showMsgEmoji") && $(".v2jun-emojilist-div.v2jun-msg-emoji").css("display", "none");
+  });
 }
 // 回帖 增强
 function huifuBetter() {
-  // 移除帖子快速回复旁“文件回帖”按钮
-  $(".kuaisuhuifu a").remove();
-  // 移除默认表情展开按钮及弹出内容区域
-  $(".viewContent .ulselect").remove();
-  $(".viewContent .emoticon-popup").remove();
+  waitForElement([".viewContent .centered-container", ".viewContent .ulselect"], () => {
+    // 移除帖子快速回复旁“文件回帖”按钮
+    $(".kuaisuhuifu a").remove();
+    // 移除默认表情展开按钮及弹出内容区域
+    $(".viewContent .ulselect").remove();
+    $(".viewContent .emoticon-popup").remove();
 
-  const ubbToggleEle = $(`<span class="v2jun-custom-toggle-btn v2jun-huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`);
-  ubbToggleEle.click(function () {
-    $(".v2jun-ubblist-div").toggle();
-    const showHuifuUbb = getUserSetting("showHuifuUbb");
-    if (showHuifuUbb) {
-      saveUserSetting("showHuifuUbb", false);
-      $(this).text("UBB 展开");
-    } else {
-      saveUserSetting("showHuifuUbb", true);
-      $(this).text("UBB 折叠");
-    }
+    const ubbToggleEle = $(`<span class="v2jun-custom-toggle-btn v2jun-huifu-ubb-toggle">${getUserSetting("showHuifuUbb") ? "UBB 折叠" : "UBB 展开"}</span>`);
+    ubbToggleEle.click(function () {
+      $(".v2jun-ubblist-div").toggle();
+      const showHuifuUbb = getUserSetting("showHuifuUbb");
+      if (showHuifuUbb) {
+        saveUserSetting("showHuifuUbb", false);
+        $(this).text("UBB 展开");
+      } else {
+        saveUserSetting("showHuifuUbb", true);
+        $(this).text("UBB 折叠");
+      }
+    });
+    $(".viewContent .kuaisuhuifu").append(ubbToggleEle);
+
+    const emojiToggleEle = $(`<span class='v2jun-custom-toggle-btn v2jun-huifu-emoji-toggle'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`);
+    emojiToggleEle.css({ "margin-left": "10px", "padding": "2px 10px" });
+    emojiToggleEle.insertBefore(".viewContent .tongzhi");
+    emojiToggleEle.click(function () {
+      $(".v2jun-emojilist-div").toggle();
+      const showHuifuEmoji = getUserSetting("showHuifuEmoji");
+      if (showHuifuEmoji) {
+        saveUserSetting("showHuifuEmoji", false);
+        $(this).text("表情 展开");
+      } else {
+        saveUserSetting("showHuifuEmoji", true);
+        $(this).text("表情 折叠");
+      }
+    });
+
+    $(".viewContent .centered-container").before('<div class="v2jun-emojilist-div v2jun-huifu-emoji"></div>');
+    createEmojiHtml(".viewContent .centered-container textarea.retextarea[name='content']");
+    $(".viewContent form .kuaisuhuifu").after('<div class="v2jun-ubblist-div v2jun-huifu-ubb"></div>');
+    createUbbHtml(".viewContent .centered-container textarea.retextarea[name='content']");
+
+    !getUserSetting("showHuifuEmoji") && $(".v2jun-emojilist-div.v2jun-huifu-emoji").css("display", "none");
+    !getUserSetting("showHuifuUbb") && $(".v2jun-ubblist-div.v2jun-huifu-ubb").css("display", "none");
   });
-  $(".viewContent .kuaisuhuifu").append(ubbToggleEle);
-
-  const emojiToggleEle = $(`<span class='v2jun-custom-toggle-btn v2jun-huifu-emoji-toggle'>${getUserSetting("showHuifuEmoji") ? "表情 折叠" : "表情 展开"}</span>`);
-  emojiToggleEle.css({ "margin-left": "10px", "padding": "2px 10px" });
-  emojiToggleEle.insertBefore(".viewContent .tongzhi");
-  emojiToggleEle.click(function () {
-    $(".v2jun-emojilist-div").toggle();
-    const showHuifuEmoji = getUserSetting("showHuifuEmoji");
-    if (showHuifuEmoji) {
-      saveUserSetting("showHuifuEmoji", false);
-      $(this).text("表情 展开");
-    } else {
-      saveUserSetting("showHuifuEmoji", true);
-      $(this).text("表情 折叠");
-    }
-  });
-
-  $(".viewContent .centered-container").before('<div class="v2jun-emojilist-div v2jun-huifu-emoji"></div>');
-  createEmojiHtml(".viewContent .centered-container textarea.retextarea[name='content']");
-  $(".viewContent form .kuaisuhuifu").after('<div class="v2jun-ubblist-div v2jun-huifu-ubb"></div>');
-  createUbbHtml(".viewContent .centered-container textarea.retextarea[name='content']");
-
-  !getUserSetting("showHuifuEmoji") && $(".v2jun-emojilist-div.v2jun-huifu-emoji").css("display", "none");
-  !getUserSetting("showHuifuUbb") && $(".v2jun-ubblist-div.v2jun-huifu-ubb").css("display", "none");
 }
 // 发帖/修改帖 增强
 function bookViewBetter() {
-  const isBookViewMod = window.location.pathname == "/bbs/book_view_mod.aspx" ? true : false; // 判断是否是修改帖子页面
+  waitForElement([".upload-container .form-group .textarea-actions", ".content .textarea-actions #saveDraftButton"], () => {
+    const isBookViewMod = window.location.pathname == "/bbs/book_view_mod.aspx" ? true : false; // 判断是否是修改帖子页面
 
-  // 生成按钮
-  const toggleEle = $(`<span class="v2jun-custom-toggle-btn view-ubb-btn" style="font-size:10px;margin-right:0;">
+    // 生成按钮
+    const toggleEle = $(`<span class="v2jun-custom-toggle-btn view-ubb-btn" style="font-size:10px;margin-right:0;">
       ${getUserSetting("showBookViewUbb") ? "UBB 折叠" : "UBB 展开"}</span>
       <span class="v2jun-custom-toggle-btn view-emoji-btn" style="font-size:10px;margin-left:0;">
       ${getUserSetting("showBookViewEmoji") ? "表情 折叠" : "表情 展开"}</span>
   `);
 
-  if (isBookViewMod) {// 修改帖子
-    $(".upload-container .form-group .textarea-actions").append(toggleEle);
-  } else {// 发布帖子
-    $(".content .textarea-actions #saveDraftButton").before(toggleEle);
-  }
-  // ubb 展开按钮
-  $(".v2jun-custom-toggle-btn.view-ubb-btn").click(function () {
-    $(".v2jun-ubblist-div").toggle();
-    const showBookViewUbb = getUserSetting("showBookViewUbb");
-    if (showBookViewUbb) {
-      saveUserSetting("showBookViewUbb", false);
-      $(this).text("UBB 展开");
-    } else {
-      saveUserSetting("showBookViewUbb", true);
-      $(this).text("UBB 折叠");
+    if (isBookViewMod) {// 修改帖子
+      $(".upload-container .form-group .textarea-actions").append(toggleEle);
+    } else {// 发布帖子
+      $(".content .textarea-actions #saveDraftButton").before(toggleEle);
     }
-  });
-  // 表情展开按钮
-  $(".v2jun-custom-toggle-btn.view-emoji-btn").click(function () {
-    $(".v2jun-emojilist-div").toggle();
-    const showBookViewEmoji = getUserSetting("showBookViewEmoji");
-    if (showBookViewEmoji) {
-      saveUserSetting("showBookViewEmoji", false);
-      $(this).text("表情 展开");
-    } else {
-      saveUserSetting("showBookViewEmoji", true);
-      $(this).text("表情 折叠");
-    }
+    // ubb 展开按钮
+    $(".v2jun-custom-toggle-btn.view-ubb-btn").click(function () {
+      $(".v2jun-ubblist-div").toggle();
+      const showBookViewUbb = getUserSetting("showBookViewUbb");
+      if (showBookViewUbb) {
+        saveUserSetting("showBookViewUbb", false);
+        $(this).text("UBB 展开");
+      } else {
+        saveUserSetting("showBookViewUbb", true);
+        $(this).text("UBB 折叠");
+      }
+    });
+    // 表情展开按钮
+    $(".v2jun-custom-toggle-btn.view-emoji-btn").click(function () {
+      $(".v2jun-emojilist-div").toggle();
+      const showBookViewEmoji = getUserSetting("showBookViewEmoji");
+      if (showBookViewEmoji) {
+        saveUserSetting("showBookViewEmoji", false);
+        $(this).text("表情 展开");
+      } else {
+        saveUserSetting("showBookViewEmoji", true);
+        $(this).text("表情 折叠");
+      }
+    });
+
+    let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
+    if (isBookViewMod) contentHeader = $(".upload-container .form-group .content-header");
+    // 向页面内注入区域
+    contentHeader.after('<div class="v2jun-emojilist-div bookview-emoji"></div>');
+    createEmojiHtml(".upload-container .form-group [name='book_content']");
+    contentHeader.after('<div class="v2jun-ubblist-div bookview-ubb"></div>');
+    createUbbHtml(".upload-container .form-group [name='book_content']");
+
+    // 读取设置，当折叠时隐藏
+    !getUserSetting("showBookViewEmoji") && $(".v2jun-emojilist-div.bookview-emoji").css("display", "none");
+    !getUserSetting("showBookViewUbb") && $(".v2jun-ubblist-div.bookview-ubb").css("display", "none");
   });
 
-  let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
-  if (isBookViewMod) contentHeader = $(".upload-container .form-group .content-header");
-  // 向页面内注入区域
-  contentHeader.after('<div class="v2jun-emojilist-div bookview-emoji"></div>');
-  createEmojiHtml(".upload-container .form-group [name='book_content']");
-  contentHeader.after('<div class="v2jun-ubblist-div bookview-ubb"></div>');
-  createUbbHtml(".upload-container .form-group [name='book_content']");
-
-  // 读取设置，当折叠时隐藏
-  !getUserSetting("showBookViewEmoji") && $(".v2jun-emojilist-div.bookview-emoji").css("display", "none");
-  !getUserSetting("showBookViewUbb") && $(".v2jun-ubblist-div.bookview-ubb").css("display", "none");
 }
 // ubb 节点
 function createUbbHtml(insertEle) {
@@ -1554,7 +1596,14 @@ function createEmojiHtml(insertEle) {
   const emojisPerRow = Math.floor(containerWidth / emojiWidth);
   const rowsPerPage = 5; // 每页显示5行
   const pageSize = emojisPerRow * rowsPerPage; // 每页显示数量
-  let currentPage = parseInt(insertEle.includes("book_content") ? getUserSetting("bookviewEmojiPage") : getUserSetting("huifuEmojiPage")) || 1; // 获取缓存的页码
+  // 获取缓存的页码
+  let pageSettingKey = "huifuEmojiPage"; // 默认回帖表情页码
+  if (insertEle.includes("book_content")) {
+    pageSettingKey = "bookviewEmojiPage"; // 发帖表情页码
+  } else if (insertEle.includes("mmscontent")) {
+    pageSettingKey = "msgEmojiPage"; // 信箱表情页码
+  }
+  let currentPage = parseInt(getUserSetting(pageSettingKey)) || 1;
   const totalPages = Math.ceil(allEmojiList.length / pageSize); // 总页数
   currentPage = Math.min(Math.max(currentPage, 1), totalPages); // 确保页码在有效范围内
 
@@ -1578,7 +1627,7 @@ function createEmojiHtml(insertEle) {
     // 更新分页按钮
     updatePaginationButtons();
     // 缓存当前页码
-    saveUserSetting(insertEle.includes("book_content") ? "bookviewEmojiPage" : "huifuEmojiPage", page);
+    saveUserSetting(pageSettingKey, page);
   }
 
   // 创建分页按钮
@@ -1715,91 +1764,93 @@ function imgCustomProcess() {
 }
 // 复读机(回帖+1)
 function huifuCopy() {
-  const isNewHuifu = $(".recontent .forum-post .admin-actions").length > 0;
-  if (isNewHuifu) {
-    // 新版回帖
-    $(".recontent .forum-post .post-content .retext").each(function () {
-      // 检查是否已经处理过，如果处理过则跳过
-      if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
+  waitForElement([".recontent .forum-post .post-content .retext", ".recontent .list-reply .retext"], () => {
+    const isNewHuifu = $(".recontent .forum-post .admin-actions").length > 0;
+    if (isNewHuifu) {
+      // 新版回帖
+      $(".recontent .forum-post .post-content .retext").each(function () {
+        // 检查是否已经处理过，如果处理过则跳过
+        if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
 
-      const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
-      $(this).append(copySpanEle);
-      copySpanEle.click((e) => {
-        e.stopPropagation();
-        const copyText = _handleHtml($(this).closest(".forum-post").find(".retext").html());
-        insetCustomContent(copyText, ".centered-container .retextarea");
-        scrollToEle(".centered-container .retextarea", 80);
-        setTimeout(() => {
-          getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
-        }, 150);
+        const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
+        $(this).after(copySpanEle);
+        copySpanEle.click((e) => {
+          e.stopPropagation();
+          const copyText = _handleHtml($(this).closest(".forum-post").find(".retext").html());
+          insetCustomContent(copyText, ".centered-container .retextarea");
+          scrollToEle(".centered-container .retextarea", 80);
+          setTimeout(() => {
+            getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
+          }, 150);
+        });
+        // 添加标识，标记为已处理
+        $(this).attr("v2jun-data-huifu-copy-processed", "true");
       });
-      // 添加标识，标记为已处理
-      $(this).attr("v2jun-data-huifu-copy-processed", "true");
-    });
-  } else {
-    // 旧版回帖
-    $(".recontent .list-reply .retext").each(function () {
-      // 检查是否已经处理过，如果处理过则跳过
-      if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
+    } else {
+      // 旧版回帖
+      $(".recontent .list-reply .retext").each(function () {
+        // 检查是否已经处理过，如果处理过则跳过
+        if ($(this).attr("v2jun-data-huifu-copy-processed")) return;
 
-      const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
-      $(this).after(copySpanEle);
-      copySpanEle.click((e) => {
-        e.stopPropagation();
-        const copyText = _handleHtml($(this).closest(".reline.list-reply").find(".retext").html());
-        insetCustomContent(copyText, ".centered-container .retextarea");
-        scrollToEle(".centered-container .retextarea", 80);
-        setTimeout(() => {
-          getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
-        }, 150);
+        const copySpanEle = $("<span class='v2jun-huifu-copy'>+1</span>");
+        $(this).after(copySpanEle);
+        copySpanEle.click((e) => {
+          e.stopPropagation();
+          const copyText = _handleHtml($(this).closest(".reline.list-reply").find(".retext").html());
+          insetCustomContent(copyText, ".centered-container .retextarea");
+          scrollToEle(".centered-container .retextarea", 80);
+          setTimeout(() => {
+            getUserSetting("huifuCopyAutoSubmit") && $(".kuaisuhuifu input").trigger("click");
+          }, 150);
+        });
+        // 标记为已处理
+        $(this).attr("v2jun-data-huifu-copy-processed", "true");
       });
-      // 标记为已处理
-      $(this).attr("v2jun-data-huifu-copy-processed", "true");
-    });
-  }
-  function _handleHtml(retextHtml) {
-    // 创建一个临时的 div 来解析 HTML 内容
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = retextHtml;
-    // 缓存标签处理方法
-    const tagHandlers = new Map([
-      ["img", (node) => `[img]${node.getAttribute("src")}[/img]`],
-      ["audio", (node) => `[audio]${node.getAttribute("src")}[/audio]`],
-      ["video", (node) => `[movie]${node.getAttribute("src")}[/movie]`],
-      [
-        "a",
-        (node) => {
-          const href = node.getAttribute("href");
-          const text = node.textContent.trim();
-          // 如果链接文本和URL相同，只输出URL
-          return href === text ? text : `[url=${href}]${text}[/url]`;
+    }
+    function _handleHtml(retextHtml) {
+      // 创建一个临时的 div 来解析 HTML 内容
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = retextHtml;
+      // 缓存标签处理方法
+      const tagHandlers = new Map([
+        ["img", (node) => `[img]${node.getAttribute("src")}[/img]`],
+        ["audio", (node) => `[audio]${node.getAttribute("src")}[/audio]`],
+        ["video", (node) => `[movie]${node.getAttribute("src")}[/movie]`],
+        [
+          "a",
+          (node) => {
+            const href = node.getAttribute("href");
+            const text = node.textContent.trim();
+            // 如果链接文本和URL相同，只输出URL
+            return href === text ? text : `[url=${href}]${text}[/url]`;
+          }
+        ]
+      ]);
+      // 节点处理
+      const processNode = (node) => {
+        // 文本节点直接返回内容
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent;
         }
-      ]
-    ]);
-    // 节点处理
-    const processNode = (node) => {
-      // 文本节点直接返回内容
-      if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent;
-      }
-      // 元素节点处理
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const tagName = node.tagName.toLowerCase();
-        const handler = tagHandlers.get(tagName);
-        // 如果有对应的处理器，直接处理
-        if (handler) {
-          return handler(node);
+        // 元素节点处理
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tagName = node.tagName.toLowerCase();
+          const handler = tagHandlers.get(tagName);
+          // 如果有对应的处理器，直接处理
+          if (handler) {
+            return handler(node);
+          }
+          // 其他元素，字符串拼接
+          if (node.childNodes.length) {
+            return Array.from(node.childNodes).map(processNode).join("");
+          }
         }
-        // 其他元素，字符串拼接
-        if (node.childNodes.length) {
-          return Array.from(node.childNodes).map(processNode).join("");
-        }
-      }
-      return "";
-    };
-    // 字符串拼接
-    return Array.from(tempDiv.childNodes).map(processNode).join("");
-  }
+        return "";
+      };
+      // 字符串拼接
+      return Array.from(tempDiv.childNodes).map(processNode).join("");
+    }
+  });
 }
 // 隐藏楼主勋章
 function hideXunzhang() {
@@ -2560,7 +2611,36 @@ function checkLocation() {
 }
 
 /* ================================================== 自定义方法开始 ================================================== */
+/**
+ * 元素检测函数 - 检测指定元素是否存在，存在时执行回调函数
+ * @param {string} selector - 元素选择器
+ * @param {function} callback - 元素存在时要执行的回调函数
+ * @param {number} maxRetries - 最大重试次数，默认10次
+ * @param {number} interval - 重试间隔时间(毫秒)，默认300ms
+ * @param {number} currentRetry - 当前重试次数(内部使用)
+ */
+function waitForElement(selector, callback, maxRetries = 10, interval = 300, currentRetry = 0) {
+  if (currentRetry >= maxRetries) {
+    // console.log(`元素检测失败: ${selector} 在 ${maxRetries} 次重试后仍未找到`);
+    return;
+  }
+  // 支持多个选择器（数组或逗号分隔的字符串）
+  const selectors = Array.isArray(selector) ? selector : selector.split(',').map(s => s.trim());
+  // 检查是否有任何一个元素存在
+  const foundElement = selectors.some(sel => $(sel).length > 0);
 
+  if (foundElement) {
+    // 元素存在，执行回调函数
+    // console.log(`元素检测成功: 在 ${currentRetry + 1} 次检测时找到符合条件的元素`);
+    callback();
+  } else {
+    // 元素不存在，继续重试
+    // console.log(`元素检测重试: 第 ${currentRetry + 1}/${maxRetries} 次检测`);
+    setTimeout(() => {
+      waitForElement(selector, callback, maxRetries, interval, currentRetry + 1);
+    }, interval);
+  }
+}
 // 监听评论区加载
 function listenRecontentLoad() {
   // 监听新 .recontent 元素加载，以此判断评论区加载更多是否完成
@@ -2587,35 +2667,6 @@ function listenRecontentLoad() {
     getUserSetting("showHuifuCopy") && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, huifuCopy);
   }
   _waitFunc();
-}
-// 加载并执行远程js文件，将其存入 localstorage
-function loadAndExecuteScript2(url, loaclStorageKey) {
-  return new Promise((resolve) => {
-    const cacheScript = localStorage.getItem(loaclStorageKey);
-    if (cacheScript?.length > 0) {
-      _executeScript(cacheScript); // 执行缓存 js
-      resolve(true);
-    } else {
-      fetch(url) // 加载远程 js
-        .then((response) => response.text())
-        .then((fetchScriptContent) => {
-          _executeScript(fetchScriptContent);
-          localStorage.setItem(loaclStorageKey, fetchScriptContent);
-          resolve(true);
-        })
-        .catch((err) => {
-          notifyBox("未知错误，Jquery 加载失败，请刷新重试…", false);
-          resolve(false);
-        });
-    }
-  });
-
-  // 执行指定内容 js 代码
-  function _executeScript(scriptContent) {
-    const script = document.createElement("script"); // 创建script元素
-    script.text = scriptContent; // 设置脚本内容
-    document.head.appendChild(script); // 执行脚本
-  }
 }
 // 加载并执行远程js文件，将其存入 localstorage
 function loadAndExecuteScript(url, loaclStorageKey) {
