@@ -1232,9 +1232,9 @@ function messageBetter() {
     });
 
     $(".mmscontent").before('<div class="v2jun-ubblist-div v2jun-msg-ubb"></div>');
-    createUbbHtml(".mmscontent");
+    createUbbHtml(".centered-container textarea[name='content']");
     $(".mmscontent").before('<div class="v2jun-emojilist-div v2jun-msg-emoji"></div>');
-    createEmojiHtml(".mmscontent");
+    createEmojiHtml(".centered-container textarea[name='content']");
 
     !getUserSetting("showMsgUbb") && $(".v2jun-ubblist-div.v2jun-msg-ubb").css("display", "none");
     !getUserSetting("showMsgEmoji") && $(".v2jun-emojilist-div.v2jun-msg-emoji").css("display", "none");
