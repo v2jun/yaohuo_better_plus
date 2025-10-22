@@ -758,43 +758,38 @@ const settingIconBase64 =
   if (!checkLocation()) return;
 
   const jqueryIsLoad = await loadAndExecuteScript("https://code.jquery.com/jquery-3.7.1.min.js", "jquery-3.7.1.min");
-  if (!jqueryIsLoad) {
-    notifyBox("未知错误，JQuery 加载失败，请刷新重试", false);
-    return;
-  }
+  if (!jqueryIsLoad) { notifyBox("未知错误，JQuery 加载失败，请刷新重试", false); return; }
+
 
   const setttingIsInit = await initSetting();
-  if (!setttingIsInit) return;
+  if (!setttingIsInit) { notifyBox("未知错误，初始化设置失败，请刷新重试", false); return; }
 
-  const userSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
-  if (!userSetting || !userSetting.version) {
-    notifyBox("未知错误，加载用户设置失败", false);
-    return;
-  }
 
-  if (userSetting?.firstLoadScript) {
+  if (!userSettingCache) { notifyBox("未知错误，加载用户设置失败", false); return; }
+
+  if (userSettingCache?.firstLoadScript) {
     alert("请合理/合法使用本脚本，不要影响论坛正常看帖/回帖！！！如因使用本脚本而被封号/小黑屋，雨我无瓜(免责声明.jpg)");
     saveUserSetting("firstLoadScript", false);
   }
 
-  userSetting?.checkVersion && checkVersion();
+  userSettingCache?.checkVersion && checkVersion();
   addCustomStyle();
   // 页面解析完成后再执行代码，否则 jquery 可能会获取不到 document 内容导致脚本执行失败
   $(document).ready(() => {
     createScriptSetting();
-    userSetting?.showTopAndDownBtn && addTopAndDown();
-    // userSetting?.showChuiniuHistory && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
-    userSetting?.oneClickCollectMoney && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, speedEatMoney);
-    userSetting?.hideXunzhang && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, hideXunzhang);
+    userSettingCache?.showTopAndDownBtn && addTopAndDown();
+    // userSettingCache?.showChuiniuHistory && executeFunctionForURL("/games/chuiniu/doit.aspx", chuiniuHistory);
+    userSettingCache?.oneClickCollectMoney && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, speedEatMoney);
+    userSettingCache?.hideXunzhang && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, hideXunzhang);
   });
   // 页面加载完成后再执行代码，否则页面资源可能会获取不到，导致玄学bug，比如图片等
   $(window).on("load", () => {
     executeFunctionForURL(/^\/bbs\/book_view_.*\.aspx(\?.*)?$/i, bookViewBetter);
     executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, huifuBetter);
-    userSetting?.autoLoadMoreBookList && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
-    userSetting?.autoLoadMoreHuifuList && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, autoLoadMoreHuifuList);
-    userSetting?.openLayerForBook && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
-    userSetting?.useRight && executeFunctionForURL(/^\/bbs\/book.*$/i, useRightNextBtn);
+    userSettingCache?.autoLoadMoreBookList && executeFunctionForURL("/bbs/book_list.aspx", autoLoadMoreBookList);
+    userSettingCache?.autoLoadMoreHuifuList && executeFunctionForURL(/^(\/bbs-.*\.html(\?.*)?|\/bbs\/book_view\.aspx\?.*id=\d+.*)$/i, autoLoadMoreHuifuList);
+    userSettingCache?.openLayerForBook && executeFunctionForURL("/bbs/book_list.aspx", openLayer);
+    userSettingCache?.useRight && executeFunctionForURL(/^\/bbs\/book.*$/i, useRightNextBtn);
     listenRecontentLoad();
   });
 })();
@@ -1264,11 +1259,9 @@ function bookViewBetter() {
       ${getUserSetting("showBookViewEmoji") ? "表情 折叠" : "表情 展开"}</span>
   `);
 
-  if (isBookViewMod) {
-    // 修改帖子
+  if (isBookViewMod) {// 修改帖子
     $(".upload-container .form-group .textarea-actions").append(toggleEle);
-  } else {
-    // 发布帖子
+  } else {// 发布帖子
     $(".content .textarea-actions #saveDraftButton").before(toggleEle);
   }
   // ubb 展开按钮
@@ -1298,7 +1291,6 @@ function bookViewBetter() {
 
   let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
   if (isBookViewMod) contentHeader = $(".upload-container .form-group .content-header");
-  console.log("isBookViewMod:", isBookViewMod);
   // 向页面内注入区域
   contentHeader.after('<div class="v2jun-emojilist-div bookview-emoji"></div>');
   createEmojiHtml(".upload-container .form-group [name='book_content']");
@@ -2541,15 +2533,16 @@ function createScriptSetting() {
 }
 
 // 初始化本地设置文件(存放于localStorage，清除浏览器缓存会让设置失效)
+let userSettingCache = null;
 function initSetting() {
   return new Promise((resolve) => {
     const localSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting")) || {};
-    const saveSetting = {
+    userSettingCache = {
       ...defaultSetting,
       ...localSetting
     }; // 合并设置，自定义项覆盖默认选项，避免添加新功能时已缓存设置没有新功能相关从而产生bug
     try {
-      localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(saveSetting));
+      localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(userSettingCache));
       console.log("======> [ 已成功初始化设置 ]");
       resolve(true);
     } catch (error) {
@@ -2563,9 +2556,7 @@ function initSetting() {
 function checkLocation() {
   const currentHost = window.location.host;
   const targetHostArr = ["yaohuo.me", "www.yaohuo.me"];
-
-  if (targetHostArr.includes(currentHost)) return true;
-  else return false;
+  return targetHostArr.includes(currentHost);
 }
 
 /* ================================================== 自定义方法开始 ================================================== */
@@ -2635,7 +2626,7 @@ function loadAndExecuteScript(url, loaclStorageKey) {
       resolve(true);
       return;
     }
-    
+
     const cacheScript = localStorage.getItem(loaclStorageKey);
     if (cacheScript?.length > 0) {
       _executeScript(cacheScript); // 执行缓存 js
@@ -2987,10 +2978,9 @@ function getPageContent(path, method = "GET") {
 
 // 设置保存
 function saveUserSetting(setName, setValue) {
-  let cacheSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
-  cacheSetting[setName] = setValue;
+  userSettingCache[setName] = setValue;
   try {
-    localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(cacheSetting));
+    localStorage.setItem("yaohuoBetterPlusSetting", JSON.stringify(userSettingCache));
     // notifyBox(successMsg);
   } catch (error) {
     // notifyBox(errorMsg, false);
@@ -3000,9 +2990,7 @@ function saveUserSetting(setName, setValue) {
 // 设置获取
 function getUserSetting(name) {
   try {
-    const userSetting = JSON.parse(localStorage.getItem("yaohuoBetterPlusSetting"));
-    if (!userSetting) return defaultSetting[name];
-    else return userSetting[name] !== undefined ? userSetting[name] : defaultSetting[name];
+    return (userSettingCache ?? defaultSetting)[name] ?? defaultSetting[name];
   } catch (error) {
     notifyBox("未知错误，获取用户设置失败", false);
     throw new Error("未知错误，获取设置失败");
