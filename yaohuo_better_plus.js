@@ -1182,7 +1182,7 @@ function autoLoadMoreBookList() {
 }
 // 上一页，下一页按钮互换位置
 function useRightNextBtn() {
-  waitForElement(".content .upload-image-btn", () => {
+  waitForElement(".btBox .bt2", () => {
     const btBox = $(".btBox .bt2");
     const links = btBox.children("a");
     // 检查是否为上一页和下一页按钮，避免其他按钮被误操作
