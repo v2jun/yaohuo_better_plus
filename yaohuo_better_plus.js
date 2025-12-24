@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            妖火网增强脚本Plus
 // @namespace       https://www.yaohuo.me/
-// @version         1.8.2
+// @version         1.8.3
 // @description     让妖火再次变得伟大(手动狗头.jpg)
 // @author          柠檬没有汁@27894
 // @match           *://yaohuo.me/*
@@ -21,7 +21,7 @@
 
 // 脚本默认设置
 const defaultSetting = {
-  version: "1.8.2", // 脚本版本
+  version: "1.8.3", // 脚本版本
   checkVersion: false, // 检查更新
 
   firstLoadScript: true, // 第一次加载脚本
@@ -52,7 +52,7 @@ const defaultSetting = {
   autoLoadMoreHuifuList: false, // 回复列表自动加载更多
   openLayerForBook: false, // pc 端帖子在弹窗中打开
 
-  imgUploadApiUrl: ["https://mtbed.netsons.org/upload.php", "https://img.ink/api/upload", 'https://tc.qdqqd.com/uploadtg'],
+  imgUploadApiUrl: ["https://mtbed.netsons.org/upload.php", "https://img.ink/api/upload", 'https://tc.qdqqd.com/uploadmt'],
   imgUploadSelOpt: 0, // 使用图床
   suimoToken: "", // 水墨图床 token
   textareaAutoFocus: true, // 输入框自动获取焦点
@@ -1297,7 +1297,7 @@ function bookViewBetter() {
       ${getUserSetting("showBookViewUbb") ? "UBB 折叠" : "UBB 展开"}</span>
       <span class="v2jun-custom-toggle-btn view-emoji-btn" style="font-size:10px;margin-left:0;">
       ${getUserSetting("showBookViewEmoji") ? "表情 折叠" : "表情 展开"}</span>
-  `);
+    `);
 
     if (isBookViewMod) {// 修改帖子
       $(".upload-container .form-group .textarea-actions").append(toggleEle);
@@ -1329,7 +1329,7 @@ function bookViewBetter() {
       }
     });
 
-    let contentHeader = $(".upload-container .form-group .content-header").eq(1); // 发布帖子
+    let contentHeader = $(".upload-container .form-group .content-header"); // 发布帖子
     if (isBookViewMod) contentHeader = $(".upload-container .form-group .content-header");
     // 向页面内注入区域
     contentHeader.after('<div class="v2jun-emojilist-div bookview-emoji"></div>');
@@ -1341,7 +1341,6 @@ function bookViewBetter() {
     !getUserSetting("showBookViewEmoji") && $(".v2jun-emojilist-div.bookview-emoji").css("display", "none");
     !getUserSetting("showBookViewUbb") && $(".v2jun-ubblist-div.bookview-ubb").css("display", "none");
   });
-
 }
 // ubb 节点
 function createUbbHtml(insertEle) {
@@ -1427,42 +1426,68 @@ function createUbbHtml(insertEle) {
               notifyBox("请选择图片", false);
               return;
             }
-            if (tempFiles?.length > 10) {
-              notifyBox("一次最多选择 10 张图片", false);
+            if (tempFiles?.length > 20) {
+              notifyBox("一次最多选择 20 张图片", false);
               return;
             }
 
             showWaitBox("上传中…"); // 上传等待提示
-            let uploadCount = { currentIndex: 0, success: 0, fail: 0 }; // 存储上传结果数量
+            let currentIndex = 0; // 当前上传的文件索引
+            let successCount = 0; // 成功上传的文件数量
+            let failCount = 0; // 失败上传的文件数量
+            const uploadResults = []; // 存储每个文件的上传结果，按原始顺序
+            const retryCounts = []; // 存储每个文件的重试次数
+            let nextInsertIndex = 0; // 下一个应该插入的索引位置
+            const MAX_RETRY_COUNT = 1; // 最大重试次数 - 只重试一次
+
             const uploadNextImage = () => {
-              if (uploadCount.currentIndex >= tempFiles.length) {
-                // 所有图片上传完成
-                setTimeout(() => {
-                  $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
-                }, 1000);
-                setTimeout(() => notifyBox(`已成功上传 ${uploadCount.success} 个文件，失败 ${uploadCount.fail} 个文件`), 1500);
-                $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
+              if (currentIndex >= tempFiles.length) {
+                // 检查是否所有文件都已处理完成（包括重试）
+                const allProcessed = uploadResults.every((result, index) =>
+                  result !== undefined || (retryCounts[index] !== undefined && retryCounts[index] >= MAX_RETRY_COUNT)
+                );
+
+                if (allProcessed) {
+                  // 所有图片上传完成
+                  setTimeout(() => {
+                    $(".v2jun-wait-box-overlay").remove(); // 关闭等待提示
+                  }, 1000);
+                  setTimeout(() => notifyBox(`已成功上传 ${successCount} 个文件，失败 ${failCount} 个文件`));
+                  $(fileInput).val(""); // 上传完成后清空文件选择,解决某些浏览器上出现的重复上传及选择相同文件时不上传问题
+                }
                 return;
               }
 
+              // 初始化重试次数
+              if (retryCounts[currentIndex] === undefined) {
+                retryCounts[currentIndex] = 0;
+              }
+
+              const currentImg = tempFiles[currentIndex];
+              // 检查文件大小是否超过20MB
+              if (currentImg.size > 20 * 1024 * 1024) {
+                notifyBox(`第 ${currentIndex + 1} 张图片文件过大，已跳过`, false, 1000);
+                failCount++;
+                uploadResults[currentIndex] = { success: false, index: currentIndex, retryCount: retryCounts[currentIndex] };
+                currentIndex++;
+                setTimeout(() => uploadNextImage(), 500);
+                return;
+              }
+
+              performUpload(false);
+            };
+
+            // 执行上传操作的统一函数
+            const performUpload = (isRetry = false) => {
               const url = defaultSetting.imgUploadApiUrl[getUserSetting("imgUploadSelOpt")];
               const options = {};
               if (getUserSetting("imgUploadSelOpt") == 1) {
-                // 水墨图床添加 token
                 options.headers = {
                   token: getUserSetting("suimoToken")
                 };
               }
-              const currentImg = tempFiles[uploadCount.currentIndex];
-              // 检查文件大小是否超过20MB
-              if (currentImg.size > 20 * 1024 * 1024) {
-                notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片文件过大，已跳过`, false, 300);
-                uploadCount.fail++;
-                uploadCount.currentIndex++;
-                uploadNextImage();
-                return;
-              }
 
+              const currentImg = tempFiles[currentIndex];
               const data = new FormData();
               if (getUserSetting("imgUploadSelOpt") == 2) data.append("file", currentImg);
               else data.append("image", currentImg);
@@ -1471,36 +1496,73 @@ function createUbbHtml(insertEle) {
                 url,
                 data,
                 options,
-                success: (res) => {
-                  if (getUserSetting("imgUploadSelOpt") == 2 && res?.data?.length > 0) {
-                    res.code = 200;
-                    let url = res.data;
-                    res.data = {};
-                    res.data.url = url;
-                  }
-                  const { code, data } = res;
-                  if (code == 200) {
-                    uploadCount.success++;
-                    insetCustomContent(ubbHandle([data.url]), insertEle);
-
-                    if (tempFiles.length > 1) {
-                      notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片已上传成功`, true, 200);
-                    }
-                  } else {
-                    uploadCount.fail++;
-                    notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
-                  }
-                  // 继续上传下一张
-                  uploadCount.currentIndex++;
-                  setTimeout(() => uploadNextImage(), 500);
-                },
-                error: (err) => {
-                  notifyBox(`第 ${uploadCount.currentIndex + 1} 张图片上传失败`, false, 300);
-                  uploadCount.currentIndex++;
-                  uploadCount.fail++;
-                  setTimeout(() => uploadNextImage(), 500);
-                }
+                success: (res) => handleUploadResponse(res, isRetry),
+                error: (err) => handleUploadFailure(isRetry ? "重试失败" : "网络错误")
               });
+            };
+            // 标准化上传响应格式
+            const normalizeUploadResponse = (res) => {
+              // 水墨图床特殊处理：当 data 是字符串时，转换为标准格式
+              if (getUserSetting("imgUploadSelOpt") == 2 && typeof res?.data === "string" && res?.data?.length > 0) {
+                return {
+                  ...res,
+                  code: 200,
+                  data: { url: res.data }
+                };
+              }
+
+              // 标准格式直接返回，保留原始响应中的所有字段
+              return res;
+            };
+            // 统一的响应处理函数
+            const handleUploadResponse = (res, isRetry = false) => {
+              // 统一处理响应格式
+              const { code, data } = normalizeUploadResponse(res);
+
+              if (code == 200) {
+                successCount++;
+                uploadResults[currentIndex] = { success: true, url: data.url, index: currentIndex, retryCount: retryCounts[currentIndex] };
+                notifyBox(`第 ${currentIndex + 1} 张图片已上传成功`, true, 1000);
+
+                tryInsertContent();
+                currentIndex++;
+                setTimeout(() => uploadNextImage(), 500);
+              } else {
+                handleUploadFailure(isRetry ? "重试失败" : "上传失败");
+              }
+            };
+            // 处理上传失败的函数
+            const handleUploadFailure = (errorType) => {
+              retryCounts[currentIndex]++;
+
+              if (retryCounts[currentIndex] < MAX_RETRY_COUNT) {
+                // 还有重试机会
+                notifyBox(`第 ${currentIndex + 1} 张图片${errorType}，正在重试`, false, 1000);
+                // 延迟后重试
+                setTimeout(() => performUpload(true), 1000);
+              } else {
+                // 重试次数用完，放弃上传
+                failCount++;
+                uploadResults[currentIndex] = { success: false, index: currentIndex, retryCount: retryCounts[currentIndex] };
+                notifyBox(`第 ${currentIndex + 1} 张图片上传失败，已放弃`, false, 1000);
+                // 即使失败也要尝试插入，确保顺序
+                tryInsertContent();
+
+                // 继续上传下一张
+                currentIndex++;
+                setTimeout(() => uploadNextImage(), 500);
+              }
+            };
+            // 尝试按顺序插入内容
+            const tryInsertContent = () => {
+              // 从 nextInsertIndex 开始，按顺序检查并插入已完成的内容
+              while (nextInsertIndex < uploadResults.length && uploadResults[nextInsertIndex] !== undefined) {
+                const result = uploadResults[nextInsertIndex];
+                if (result.success) {
+                  insetCustomContent(ubbHandle([result.url]), insertEle);
+                }
+                nextInsertIndex++;
+              }
             };
             // 开始上传第一张图片
             uploadNextImage();
